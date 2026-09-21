@@ -17,8 +17,9 @@ test.describe('Alur Keuangan Lengkap SIKESAN', () => {
 
     await page.getByRole('button', { name: /catat infaq/i }).click();
 
-    // Pilih Kategori Infaq
-    const infaqCategorySelect = page.locator('button[role="combobox"]').nth(1);
+    // Pilih Kategori Infaq di dalam Modal
+    const infaqDialog = page.getByRole('dialog');
+    const infaqCategorySelect = infaqDialog.locator('button[role="combobox"]').nth(1);
     await infaqCategorySelect.click();
     await page.getByRole('option').first().click();
 
@@ -41,8 +42,9 @@ test.describe('Alur Keuangan Lengkap SIKESAN', () => {
 
     await page.getByRole('button', { name: /catat pengeluaran/i }).click();
 
-    // Pilih Kategori Pengeluaran
-    const expenseCategorySelect = page.locator('button[role="combobox"]').first();
+    // Pilih Kategori Pengeluaran di dalam Modal
+    const expenseDialog = page.getByRole('dialog');
+    const expenseCategorySelect = expenseDialog.locator('button[role="combobox"]').first();
     await expenseCategorySelect.click();
     await page.getByRole('option').first().click();
 

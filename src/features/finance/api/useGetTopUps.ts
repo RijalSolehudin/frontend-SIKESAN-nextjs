@@ -6,6 +6,8 @@ interface UseGetTopUpsParams {
   page?: number;
   per_page?: number;
   status?: string;
+  start_date?: string;
+  end_date?: string;
 }
 
 export const useGetTopUps = (params?: UseGetTopUpsParams) => {

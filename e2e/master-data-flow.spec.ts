@@ -21,13 +21,15 @@ test.describe('Alur Master Data SIKESAN', () => {
     await page.getByPlaceholder(/contoh: 2024001/i).fill(uniqueNis);
     await page.getByPlaceholder(/contoh: Muhammad Fatih/i).fill(`Santri Non-Mukim ${uniqueNis}`);
 
-    // Pilih Kelas
-    const classSelect = page.locator('button[role="combobox"]').nth(1);
+    const studentDialog = page.getByRole('dialog');
+
+    // Pilih Kelas (combobox ke-1 di dalam modal)
+    const classSelect = studentDialog.locator('button[role="combobox"]').nth(1);
     await classSelect.click();
     await page.getByRole('option').first().click();
 
-    // Pastikan default Asrama adalah 'Non-Mukim (Pulang-Pergi)' atau pilih Non-Mukim
-    const dormSelect = page.locator('button[role="combobox"]').nth(2);
+    // Pastikan default Asrama adalah 'Non-Mukim (Pulang-Pergi)' atau pilih Non-Mukim (combobox ke-2 di dalam modal)
+    const dormSelect = studentDialog.locator('button[role="combobox"]').nth(2);
     await dormSelect.click();
     await page.getByRole('option', { name: /non-mukim/i }).click();
 

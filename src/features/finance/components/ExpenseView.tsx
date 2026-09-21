@@ -8,13 +8,26 @@ import { MetricCard } from '@/features/dashboard/components/MetricCard';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
+import { DateRangeFilter, DateFilterValue } from '@/components/ui/date-range-filter';
 
 export function ExpenseView() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(15);
+  const [dateFilter, setDateFilter] = useState<DateFilterValue>({ preset: 'all' });
   const { data: ledgerData, isLoading, isError, refetch } = useGetLedger({ per_page: 100 });
 
-  const expenseTransactions = ledgerData?.data.filter((trx: any) => trx.type === 'EXPENSE' || trx.description?.toLowerCase().includes('pengeluaran')) || [];
+  const expenseTransactions = (ledgerData?.data || []).filter((trx: any) => {
+    const isExpense = trx.type === 'EXPENSE' || trx.description?.toLowerCase().includes('pengeluaran');
+    if (!isExpense) return false;
+
+    if (dateFilter.startDate || dateFilter.endDate) {
+      const trxDate = trx.date ? trx.date.slice(0, 10) : '';
+      if (dateFilter.startDate && trxDate < dateFilter.startDate) return false;
+      if (dateFilter.endDate && trxDate > dateFilter.endDate) return false;
+    }
+    return true;
+  });
+
   const totalExpense = expenseTransactions.reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0);
   const paginatedTransactions = expenseTransactions.slice((page - 1) * perPage, page * perPage);
 
@@ -79,7 +92,7 @@ export function ExpenseView() {
 
       {/* Table Card */}
       <div className="glass-card rounded-2xl p-5 sm:p-6 border shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <div className="space-y-0.5">
             <h3 className="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
               <History className="h-4 w-4 text-rose-600" />
@@ -87,6 +100,14 @@ export function ExpenseView() {
             </h3>
             <p className="text-xs text-slate-400">Daftar biaya operasional yang telah dicatat ke dalam buku besar</p>
           </div>
+
+          <DateRangeFilter 
+            value={dateFilter}
+            onChange={(newVal) => {
+              setDateFilter(newVal);
+              setPage(1);
+            }}
+          />
         </div>
 
         {isError ? (

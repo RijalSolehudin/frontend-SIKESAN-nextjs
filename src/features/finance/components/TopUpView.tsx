@@ -6,13 +6,18 @@ import { TopUpTable } from './TopUpTable';
 import { CreateTopUpModal } from './CreateTopUpModal';
 import { ArrowDownToLine, Clock, CheckCircle2 } from 'lucide-react';
 import { MetricCard } from '@/features/dashboard/components/MetricCard';
+import { DateRangeFilter, DateFilterValue } from '@/components/ui/date-range-filter';
 
 export function TopUpView() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(15);
+  const [dateFilter, setDateFilter] = useState<DateFilterValue>({ preset: 'all' });
+
   const { data, isLoading, isError, refetch } = useGetTopUps({
     page,
     per_page: perPage,
+    start_date: dateFilter.startDate,
+    end_date: dateFilter.endDate,
   });
 
   const topUps = data?.data || [];
@@ -82,11 +87,19 @@ export function TopUpView() {
 
       {/* Main Table Card */}
       <div className="glass-card rounded-2xl p-5 sm:p-6 border shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <div>
             <h3 className="font-bold text-slate-800 text-sm sm:text-base">Daftar Permintaan Top Up</h3>
             <p className="text-xs text-slate-400">Daftar transfer dan setoran tunai yang membutuhkan persetujuan bendahara</p>
           </div>
+
+          <DateRangeFilter 
+            value={dateFilter}
+            onChange={(newVal) => {
+              setDateFilter(newVal);
+              setPage(1);
+            }}
+          />
         </div>
 
         <TopUpTable 

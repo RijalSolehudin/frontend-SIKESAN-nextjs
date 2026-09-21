@@ -2,21 +2,33 @@
 
 import { useState } from 'react';
 import { useGetStudents } from '../api/useGetStudents';
+import { useGetClasses } from '../api/useGetClasses';
 import { StudentTable } from './StudentTable';
 import { CreateStudentModal } from './CreateStudentModal';
 import { Input } from '@/components/ui/input';
-import { Search, GraduationCap, UserCheck, UserX, Award } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Search, GraduationCap, UserCheck, UserX, Award, School } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { MetricCard } from '@/features/dashboard/components/MetricCard';
 
 export function StudentView() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedClassId, setSelectedClassId] = useState<string>('all');
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(50);
   const debouncedSearch = useDebounce(searchTerm, 500);
 
+  const { data: classes } = useGetClasses();
+
   const { data, isLoading, isError, refetch } = useGetStudents({
     search: debouncedSearch,
+    class_id: selectedClassId === 'all' ? undefined : Number(selectedClassId),
     page,
     per_page: perPage,
   });
@@ -88,18 +100,45 @@ export function StudentView() {
       {/* Table Card */}
       <div className="glass-card rounded-2xl p-5 sm:p-6 border shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-100 pb-4">
-          <div className="relative w-full sm:max-w-sm">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-            <Input
-              type="search"
-              placeholder="Cari nama atau NIS santri..."
-              className="pl-9 h-10 rounded-xl bg-white border-slate-200 text-sm focus:border-emerald-600"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(1);
-              }}
-            />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full sm:w-auto flex-1 max-w-xl">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+              <Input
+                type="search"
+                placeholder="Cari nama atau NIS santri..."
+                className="pl-9 h-10 rounded-xl bg-white border-slate-200 text-sm focus:border-emerald-600"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setPage(1);
+                }}
+              />
+            </div>
+
+            <div className="w-full sm:w-52">
+              <Select 
+                value={selectedClassId} 
+                onValueChange={(val) => {
+                  setSelectedClassId(val);
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 text-xs font-medium shadow-2xs">
+                  <div className="flex items-center gap-2 truncate">
+                    <School className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <SelectValue placeholder="Semua Kelas" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Kelas</SelectItem>
+                  {classes?.map((cls) => (
+                    <SelectItem key={cls.id} value={String(cls.id)}>
+                      {cls.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="text-xs text-slate-500 font-medium">

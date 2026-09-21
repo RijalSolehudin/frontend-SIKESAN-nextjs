@@ -9,14 +9,27 @@ import { MetricCard } from '@/features/dashboard/components/MetricCard';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
+import { DateRangeFilter, DateFilterValue } from '@/components/ui/date-range-filter';
 
 export function InfaqView() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(15);
+  const [dateFilter, setDateFilter] = useState<DateFilterValue>({ preset: 'all' });
   const { data: metrics, isLoading: isLoadingMetrics } = useGetTreasurerMetrics();
   const { data: ledgerData, isLoading: isLoadingLedger, isError, refetch } = useGetLedger({ per_page: 100 });
 
-  const infaqTransactions = ledgerData?.data.filter((trx: any) => trx.type === 'INFAQ') || [];
+  const infaqTransactions = (ledgerData?.data || []).filter((trx: any) => {
+    if (trx.type !== 'INFAQ') return false;
+
+    if (dateFilter.startDate || dateFilter.endDate) {
+      const trxDate = trx.date ? trx.date.slice(0, 10) : '';
+      if (dateFilter.startDate && trxDate < dateFilter.startDate) return false;
+      if (dateFilter.endDate && trxDate > dateFilter.endDate) return false;
+    }
+    return true;
+  });
+
+  const totalFilteredInfaq = infaqTransactions.reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0);
   const paginatedTransactions = infaqTransactions.slice((page - 1) * perPage, page * perPage);
 
   const formatCurrency = (amount: number = 0) => {
@@ -50,12 +63,12 @@ export function InfaqView() {
       {/* Metric Summary Strip to prevent empty screen */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <MetricCard
-          title="Total Infaq Terkumpul"
-          value={formatCurrency(metrics?.total_infaq_overall)}
+          title={dateFilter.preset === 'all' ? 'Total Infaq Terkumpul' : 'Infaq Periode Terpilih'}
+          value={formatCurrency(dateFilter.preset === 'all' ? (metrics?.total_infaq_overall ?? totalFilteredInfaq) : totalFilteredInfaq)}
           icon={<HeartHandshake className="h-4 w-4" />}
-          isLoading={isLoadingMetrics}
+          isLoading={isLoadingMetrics || isLoadingLedger}
           variant="blue"
-          badge="Akumulasi Kas"
+          badge={dateFilter.preset === 'all' ? 'Akumulasi Kas' : 'Periode Terpilih'}
           valueClassName="text-blue-700 text-2xl font-extrabold"
         />
         <MetricCard
@@ -80,7 +93,7 @@ export function InfaqView() {
 
       {/* Transaction Table Card */}
       <div className="glass-card rounded-2xl p-5 sm:p-6 border shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
           <div className="space-y-0.5">
             <h3 className="font-bold text-slate-800 text-sm sm:text-base flex items-center gap-2">
               <History className="h-4 w-4 text-emerald-600" />
@@ -88,6 +101,14 @@ export function InfaqView() {
             </h3>
             <p className="text-xs text-slate-400">Mutasi dana infaq yang telah diverifikasi ke dalam kas pondok</p>
           </div>
+
+          <DateRangeFilter 
+            value={dateFilter}
+            onChange={(newVal) => {
+              setDateFilter(newVal);
+              setPage(1);
+            }}
+          />
         </div>
 
         {isError ? (
