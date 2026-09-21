@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Alur Konfigurasi Tarif SPP & Keringanan Santri', () => {
-  test('Bendahara dapat mengatur tarif standar dan mendaftarkan keringanan khusus santri', async ({ page }) => {
+  test('Bendahara dapat mengatur tarif angkatan dan mendaftarkan keringanan khusus santri', async ({ page }) => {
     // 1. Login Petugas / Super Admin
     await page.goto('/login');
     await page.getByLabel('Username').fill('superadmin');
@@ -19,10 +19,28 @@ test.describe('Alur Konfigurasi Tarif SPP & Keringanan Santri', () => {
     await pricingTabBtn.click();
 
     // Verifikasi bagian-bagian utama di tab tarif
-    await expect(page.getByRole('heading', { name: /tarif standar & kelas/i })).toBeVisible({ timeout: 5000 });
-    await expect(page.getByRole('heading', { name: /tarif khusus & keringanan santri/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /tarif per angkatan/i })).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('heading', { name: /keringanan khusus santri/i })).toBeVisible();
 
-    // 4. Tambah Keringanan Khusus untuk Santri
+    // 4. Atur Tarif SPP Angkatan
+    await page.getByRole('button', { name: /atur tarif angkatan/i }).click();
+    const cohortModal = page.getByRole('dialog');
+    await expect(cohortModal).toBeVisible();
+    await expect(cohortModal.getByRole('heading', { name: /atur tarif spp angkatan/i })).toBeVisible();
+
+    const yearInput = cohortModal.getByPlaceholder(/contoh: 2026/i);
+    await yearInput.fill('2026');
+
+    const cohortAmountInput = cohortModal.getByPlaceholder(/150/i);
+    await cohortAmountInput.fill('275000');
+
+    await cohortModal.getByRole('button', { name: /simpan tarif angkatan/i }).click();
+    await expect(page.getByText(/tarif spp angkatan 2026 berhasil disimpan/i)).toBeVisible({ timeout: 10000 });
+
+    // Verifikasi tarif angkatan muncul di kolom kiri
+    await expect(page.getByText(/275\.000/i).first()).toBeVisible({ timeout: 5000 });
+
+    // 5. Tambah Keringanan Khusus untuk Santri
     await page.getByRole('button', { name: /tambah keringanan santri/i }).click();
     const discountModal = page.getByRole('dialog');
     await expect(discountModal).toBeVisible();
@@ -51,23 +69,8 @@ test.describe('Alur Konfigurasi Tarif SPP & Keringanan Santri', () => {
     await discountModal.getByRole('button', { name: /simpan keringanan/i }).click();
     await expect(page.getByText(/keringanan tarif spp santri berhasil disimpan/i)).toBeVisible({ timeout: 10000 });
 
-    // 5. Verifikasi santri muncul di tabel keringanan
+    // 6. Verifikasi santri muncul di tabel keringanan
     await expect(page.getByText(/125\.000/i).first()).toBeVisible({ timeout: 5000 });
     await expect(page.getByText(/dispensasi anak yatim piatu/i).first()).toBeVisible();
-
-    // 6. Atur Tarif SPP Standar
-    await page.getByRole('button', { name: /atur tarif standar \/ kelas/i }).click();
-    const standardModal = page.getByRole('dialog');
-    await expect(standardModal).toBeVisible();
-    await expect(standardModal.getByRole('heading', { name: /atur tarif spp standar/i })).toBeVisible();
-
-    const standardAmountInput = standardModal.getByPlaceholder(/contoh: 250,000/i);
-    await standardAmountInput.fill('275000');
-
-    await standardModal.getByRole('button', { name: /tetapkan tarif/i }).click();
-    await expect(page.getByText(/tarif spp standar berhasil ditetapkan/i)).toBeVisible({ timeout: 10000 });
-
-    // Verifikasi tarif standar muncul di kolom kiri
-    await expect(page.getByText(/275\.000/i).first()).toBeVisible({ timeout: 5000 });
   });
 });

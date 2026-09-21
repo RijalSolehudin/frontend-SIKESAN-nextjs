@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { MoneyInput } from '@/components/ui/money-input';
 import { Input } from '@/components/ui/input';
-import { Sliders } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -25,20 +25,12 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useCreateSppConfiguration } from '../api/useSppConfigurations';
-import { AcademicYear, Classroom } from '@/features/master-data/types';
 
 const formSchema = z.object({
-  academic_year_id: z.string().min(1, 'Tahun ajaran wajib dipilih'),
-  scope: z.enum(['all', 'class']),
-  class_id: z.string().optional(),
+  entry_year: z.string().min(4, 'Tahun Masuk minimal 4 digit').refine((val) => !isNaN(Number(val)) && Number(val) >= 2000, {
+    message: 'Tahun Masuk harus valid (>= 2000)',
+  }),
   amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
     message: 'Nominal harus berupa angka lebih dari 0',
   }),
@@ -50,68 +42,59 @@ type FormValues = z.infer<typeof formSchema>;
 interface CreateSppStandardPricingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  academicYears: AcademicYear[];
-  classes: Classroom[];
-  defaultAcademicYearId?: number;
+  defaultEntryYear?: number;
 }
 
 export function CreateSppStandardPricingModal({
   open,
   onOpenChange,
-  academicYears,
-  classes,
-  defaultAcademicYearId,
+  defaultEntryYear,
 }: CreateSppStandardPricingModalProps) {
   const createMutation = useCreateSppConfiguration();
+
+  const currentYear = new Date().getFullYear();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      academic_year_id: defaultAcademicYearId ? defaultAcademicYearId.toString() : '',
-      scope: 'all',
-      class_id: '',
+      entry_year: defaultEntryYear ? defaultEntryYear.toString() : currentYear.toString(),
       amount: '',
       notes: '',
     },
   });
 
   useEffect(() => {
-    if (open && defaultAcademicYearId) {
-      form.setValue('academic_year_id', defaultAcademicYearId.toString());
+    if (open) {
+      if (defaultEntryYear) {
+        form.setValue('entry_year', defaultEntryYear.toString());
+      }
     }
-  }, [open, defaultAcademicYearId, form]);
-
-  const scope = form.watch('scope');
+  }, [open, defaultEntryYear, form]);
 
   const resetAll = () => {
     form.reset({
-      academic_year_id: defaultAcademicYearId ? defaultAcademicYearId.toString() : '',
-      scope: 'all',
-      class_id: '',
+      entry_year: defaultEntryYear ? defaultEntryYear.toString() : currentYear.toString(),
       amount: '',
       notes: '',
     });
   };
 
   const onSubmit = (values: FormValues) => {
-    const classIdNum = values.scope === 'class' && values.class_id ? parseInt(values.class_id) : null;
-
     createMutation.mutate(
       {
-        academic_year_id: parseInt(values.academic_year_id),
-        class_id: classIdNum,
+        entry_year: parseInt(values.entry_year),
         student_id: null,
         amount: parseInt(values.amount),
         notes: values.notes || null,
       },
       {
         onSuccess: () => {
-          toast.success('Tarif SPP standar berhasil ditetapkan');
+          toast.success(`Tarif SPP Angkatan ${values.entry_year} berhasil disimpan`);
           onOpenChange(false);
           resetAll();
         },
         onError: (error: any) => {
-          toast.error(error?.response?.data?.message || 'Gagal menetapkan tarif SPP');
+          toast.error(error?.response?.data?.message || 'Gagal menyimpan tarif SPP angkatan');
         },
       }
     );
@@ -125,14 +108,14 @@ export function CreateSppStandardPricingModal({
         if (!val) resetAll();
       }}
     >
-      <DialogContent className="sm:max-w-[480px] glass-modal p-6">
+      <DialogContent className="sm:max-w-[460px] glass-modal p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <Sliders className="h-5 w-5 text-emerald-600" />
-            Atur Tarif SPP Standar
+            <CalendarDays className="h-5 w-5 text-emerald-600" />
+            Atur Tarif SPP Angkatan
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Tetapkan tarif default SPP per Tahun Ajaran atau bedakan tarif untuk tingkatan kelas tertentu.
+            Tetapkan tarif SPP standar untuk angkatan/tahun masuk tertentu. Tarif ini akan tetap berlaku selama masa pendidikan santri angkatan tersebut.
           </DialogDescription>
         </DialogHeader>
 
@@ -140,93 +123,37 @@ export function CreateSppStandardPricingModal({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
             <FormField
               control={form.control}
-              name="academic_year_id"
+              name="entry_year"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-semibold text-slate-700">Tahun Ajaran</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-10 rounded-xl">
-                        <SelectValue placeholder="Pilih Tahun Ajaran" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {academicYears.map((ay) => (
-                        <SelectItem key={ay.id} value={ay.id.toString()}>
-                          {ay.name} {ay.is_active ? '(Aktif)' : ''}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormLabel className="text-xs font-semibold text-slate-700">Tahun Masuk / Angkatan</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      placeholder="Contoh: 2026"
+                      className="h-10 rounded-xl text-sm"
+                      {...field}
+                    />
+                  </FormControl>
+                  <p className="text-[11px] text-slate-400">
+                    Santri yang terdaftar dengan tahun masuk ini akan ditagih tarif ini.
+                  </p>
                   <FormMessage className="text-xs" />
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={form.control}
-              name="scope"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-semibold text-slate-700">Cakupan Tarif</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-10 rounded-xl">
-                        <SelectValue placeholder="Pilih Cakupan" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="all">Default Semua Kelas (Umum)</SelectItem>
-                      <SelectItem value="class">Khusus Kelas Tertentu</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage className="text-xs" />
-                </FormItem>
-              )}
-            />
-
-            {scope === 'class' && (
-              <FormField
-                control={form.control}
-                name="class_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-xs font-semibold text-slate-700">Pilih Kelas</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-10 rounded-xl">
-                          <SelectValue placeholder="Pilih Kelas Spesifik" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {classes.map((cls) => (
-                          <SelectItem key={cls.id} value={cls.id.toString()}>
-                            {cls.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage className="text-xs" />
-                  </FormItem>
-                )}
-              />
-            )}
 
             <FormField
               control={form.control}
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-semibold text-slate-700">
-                    Nominal Tarif SPP Bulanan (Rp)
-                  </FormLabel>
+                  <FormLabel className="text-xs font-semibold text-slate-700">Nominal SPP per Bulan</FormLabel>
                   <FormControl>
                     <MoneyInput
-                      placeholder="Contoh: 250,000"
                       value={field.value}
                       onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      name={field.name}
+                      placeholder="Masukkan nominal, contoh: 150.000"
                     />
                   </FormControl>
                   <FormMessage className="text-xs" />
@@ -240,12 +167,12 @@ export function CreateSppStandardPricingModal({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-xs font-semibold text-slate-700">
-                    Keterangan (Opsional)
+                    Catatan Kebijakan <span className="text-slate-400 font-normal">(Opsional)</span>
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Contoh: Kenaikan tarif santri baru angkatan 2026"
-                      className="h-10 rounded-xl text-xs"
+                      placeholder="Misal: Kenaikan tarif angkatan baru SK No. 12/2026"
+                      className="h-10 rounded-xl text-sm"
                       {...field}
                     />
                   </FormControl>
@@ -254,22 +181,24 @@ export function CreateSppStandardPricingModal({
               )}
             />
 
-            <DialogFooter className="mt-6 pt-3 border-t border-slate-100 flex flex-row justify-end gap-2">
+            <DialogFooter className="pt-3 gap-2">
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={createMutation.isPending}
-                className="rounded-lg"
+                onClick={() => {
+                  onOpenChange(false);
+                  resetAll();
+                }}
+                className="rounded-xl text-xs"
               >
                 Batal
               </Button>
               <Button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="rounded-lg font-semibold"
+                className="rounded-xl text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
               >
-                {createMutation.isPending ? 'Menyimpan...' : 'Tetapkan Tarif'}
+                {createMutation.isPending ? 'Menyimpan...' : 'Simpan Tarif Angkatan'}
               </Button>
             </DialogFooter>
           </form>

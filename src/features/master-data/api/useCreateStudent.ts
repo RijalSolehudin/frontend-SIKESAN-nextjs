@@ -5,6 +5,7 @@ import { SingleStudentResponse } from '../types';
 export interface CreateStudentRequest {
   nis: string;
   name: string;
+  entry_year: number;
   class_id: number;
   dormitory_id?: number | null;
   status: 'ACTIVE' | 'INACTIVE' | 'GRADUATED';

@@ -69,6 +69,7 @@ export interface Student {
   id: number;
   nis: string;
   name: string;
+  entry_year: number;
   class_id: number;
   dormitory_id: number | null;
   status: 'ACTIVE' | 'INACTIVE' | 'GRADUATED';

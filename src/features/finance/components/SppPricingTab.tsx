@@ -6,7 +6,6 @@ import {
   useDeleteSppConfiguration,
 } from '../api/useSppConfigurations';
 import { useGetAcademicYears } from '@/features/master-data/api/useGetAcademicYears';
-import { useGetClasses } from '@/features/master-data/api/useGetClasses';
 import { SppConfiguration } from '../types';
 import { CreateSppStudentDiscountModal } from './CreateSppStudentDiscountModal';
 import { CreateSppStandardPricingModal } from './CreateSppStandardPricingModal';
@@ -15,63 +14,37 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import {
-  Sliders,
   Plus,
   Trash2,
   Search,
   User,
   HeartHandshake,
-  Layers,
+  CalendarDays,
+  GraduationCap,
 } from 'lucide-react';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 export function SppPricingTab() {
-  const [selectedAcademicYearId, setSelectedAcademicYearId] = useState<string>('all');
   const [studentSearch, setStudentSearch] = useState('');
   const [isDiscountModalOpen, setIsDiscountModalOpen] = useState(false);
-  const [isStandardModalOpen, setIsStandardModalOpen] = useState(false);
+  const [isCohortModalOpen, setIsCohortModalOpen] = useState(false);
   const [deletingConfig, setDeletingConfig] = useState<SppConfiguration | null>(null);
 
   const { data: academicYears = [] } = useGetAcademicYears();
-  const { data: classes = [] } = useGetClasses();
-
   const activeAcademicYear = academicYears.find((ay) => ay.is_active) || academicYears[0];
 
-  const {
-    data: allConfigs = [],
-    isLoading,
-  } = useGetSppConfigurations(
-    selectedAcademicYearId !== 'all'
-      ? { academic_year_id: parseInt(selectedAcademicYearId) }
-      : undefined
-  );
-
+  const { data: allConfigs = [], isLoading } = useGetSppConfigurations();
   const deleteMutation = useDeleteSppConfiguration();
 
-  // Separate standard/class configurations from student specific discounts
-  const standardConfigs = useMemo(() => {
-    return allConfigs.filter((c) => !c.student_id);
+  // Separate cohort configurations from student specific discounts
+  const cohortConfigs = useMemo(() => {
+    return allConfigs
+      .filter((c) => !c.student_id)
+      .sort((a, b) => (b.entry_year || 0) - (a.entry_year || 0));
   }, [allConfigs]);
 
   const studentDiscounts = useMemo(() => {
     return allConfigs.filter((c) => !!c.student_id);
   }, [allConfigs]);
-
-  // Find general default price for active academic year
-  const defaultYearConfig = useMemo(() => {
-    if (activeAcademicYear) {
-      return standardConfigs.find(
-        (c) => c.academic_year_id === activeAcademicYear.id && !c.class_id
-      );
-    }
-    return standardConfigs.find((c) => !c.class_id);
-  }, [standardConfigs, activeAcademicYear]);
 
   // Filtered student discounts
   const filteredDiscounts = useMemo(() => {
@@ -105,58 +78,31 @@ export function SppPricingTab() {
       <div className="glass-card rounded-2xl p-5 sm:p-6 border shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200">
-              Tahun Ajaran Aktif: {activeAcademicYear?.name || 'Belum Ditentukan'}
-            </span>
-            <span className="text-xs text-slate-500">
-              • Tarif SPP Dasar:{' '}
-              <strong className="text-slate-800">
-                {defaultYearConfig
-                  ? `Rp ${defaultYearConfig.amount.toLocaleString('id-ID')} / bulan`
-                  : 'Belum Diatur'}
-              </strong>
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+              <GraduationCap className="h-3 w-3 text-emerald-700" />
+              Sistem Tarif Berbasis Angkatan (Tahun Masuk)
             </span>
           </div>
-          <p className="text-xs text-slate-500">
-            Sistem secara cerdas memprioritaskan: <strong>Keringanan Santri</strong> &gt;{' '}
-            <strong>Tarif Kelas</strong> &gt; <strong>Tarif Dasar Tahun Ajaran</strong> saat penerbitan tagihan bulanan.
+          <p className="text-xs text-slate-500 max-w-2xl">
+            Tarif SPP santri berlaku tetap sejak tahun pertama masuk selama masa pendidikannya. Kenaikan tarif untuk angkatan baru tidak mempengaruhi angkatan sebelumnya.
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <div className="w-44">
-            <Select
-              value={selectedAcademicYearId}
-              onValueChange={setSelectedAcademicYearId}
-            >
-              <SelectTrigger className="h-9 rounded-xl text-xs bg-white">
-                <SelectValue placeholder="Pilih Tahun Ajaran" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua Tahun Ajaran</SelectItem>
-                {academicYears.map((ay) => (
-                  <SelectItem key={ay.id} value={ay.id.toString()}>
-                    {ay.name} {ay.is_active ? '(Aktif)' : ''}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setIsStandardModalOpen(true)}
+            onClick={() => setIsCohortModalOpen(true)}
             className="rounded-xl text-xs gap-1.5 shadow-2xs"
           >
-            <Sliders className="h-3.5 w-3.5 text-emerald-600" />
-            <span>Atur Tarif Standar / Kelas</span>
+            <CalendarDays className="h-3.5 w-3.5 text-emerald-600" />
+            <span>Atur Tarif Angkatan</span>
           </Button>
 
           <Button
             size="sm"
             onClick={() => setIsDiscountModalOpen(true)}
-            className="rounded-xl text-xs gap-1.5 shadow-sm"
+            className="rounded-xl text-xs gap-1.5 shadow-sm bg-emerald-600 hover:bg-emerald-700 text-white"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Tambah Keringanan Santri</span>
@@ -166,61 +112,54 @@ export function SppPricingTab() {
 
       {/* Grid: 2 Main Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Standard / Class Pricing List */}
+        {/* Left Column: Cohort (Entry Year) Pricing List */}
         <div className="lg:col-span-1 space-y-4">
           <div className="glass-card rounded-2xl p-5 border shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
-                <Layers className="h-4 w-4 text-emerald-600" />
-                <h2 className="text-sm font-bold text-slate-900">Tarif Standar & Kelas</h2>
+                <CalendarDays className="h-4 w-4 text-emerald-600" />
+                <h2 className="text-sm font-bold text-slate-900">Tarif per Angkatan</h2>
               </div>
               <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
-                {standardConfigs.length} Konfigurasi
+                {cohortConfigs.length} Angkatan
               </span>
             </div>
 
             {isLoading ? (
               <div className="py-8 text-center text-xs text-slate-400">Memuat konfigurasi...</div>
-            ) : standardConfigs.length === 0 ? (
+            ) : cohortConfigs.length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-400 space-y-2">
-                <p>Belum ada tarif standar yang diatur.</p>
+                <p>Belum ada tarif angkatan yang diatur.</p>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsStandardModalOpen(true)}
+                  onClick={() => setIsCohortModalOpen(true)}
                   className="text-xs"
                 >
-                  Tetapkan Tarif Pertama
+                  Tetapkan Tarif Angkatan Pertama
                 </Button>
               </div>
             ) : (
               <div className="space-y-2.5">
-                {standardConfigs.map((config) => (
+                {cohortConfigs.map((config) => (
                   <div
                     key={config.id}
-                    className="p-3 rounded-xl border border-slate-200/80 bg-white/70 hover:bg-emerald-50/20 transition-colors flex items-center justify-between"
+                    className="p-3.5 rounded-xl border border-slate-200/80 bg-white/70 hover:bg-emerald-50/20 transition-colors flex items-center justify-between"
                   >
-                    <div className="space-y-0.5 min-w-0 pr-2">
+                    <div className="space-y-1 min-w-0 pr-2">
                       <div className="flex items-center gap-1.5">
-                        <span
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                            config.classroom
-                              ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          }`}
-                        >
-                          {config.classroom ? `Kelas ${config.classroom.name}` : 'Semua Kelas (Umum)'}
-                        </span>
-                        <span className="text-[10px] text-slate-400 truncate">
-                          {config.academicYear?.name}
+                        <span className="px-2 py-0.5 rounded text-[11px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          {config.entry_year ? `Angkatan ${config.entry_year}` : 'Standar Umum'}
                         </span>
                       </div>
-                      <div className="text-sm font-extrabold text-slate-800 tabular-nums">
+                      <div className="text-base font-extrabold text-slate-800 tabular-nums">
                         Rp {config.amount.toLocaleString('id-ID')}
-                        <span className="text-[10px] text-slate-400 font-normal ml-1">/ bulan</span>
+                        <span className="text-[11px] text-slate-400 font-normal ml-1">/ bulan</span>
                       </div>
                       {config.notes && (
-                        <p className="text-[10px] text-slate-500 truncate max-w-[200px]">{config.notes}</p>
+                        <p className="text-[11px] text-slate-500 truncate max-w-[220px]" title={config.notes}>
+                          {config.notes}
+                        </p>
                       )}
                     </div>
 
@@ -249,9 +188,9 @@ export function SppPricingTab() {
               <div className="flex items-center gap-2">
                 <HeartHandshake className="h-4 w-4 text-emerald-600" />
                 <div>
-                  <h2 className="text-sm font-bold text-slate-900">Tarif Khusus & Keringanan Santri</h2>
+                  <h2 className="text-sm font-bold text-slate-900">Keringanan Khusus Santri</h2>
                   <p className="text-[11px] text-slate-500">
-                    Pengecualian tarif bagi santri kurang mampu, yatim, atau beasiswa persetujuan manajemen.
+                    Dispensasi atau beasiswa khusus per santri persetujuan manajemen pondok.
                   </p>
                 </div>
               </div>
@@ -276,22 +215,23 @@ export function SppPricingTab() {
                   <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
                     <tr>
                       <th scope="col" className="px-4 py-3 font-semibold">Nama Santri</th>
+                      <th scope="col" className="px-4 py-3 font-semibold">Angkatan</th>
                       <th scope="col" className="px-4 py-3 font-semibold">Kelas</th>
-                      <th scope="col" className="px-4 py-3 font-semibold">Tarif Khusus</th>
-                      <th scope="col" className="px-4 py-3 font-semibold">Alasan / Persetujuan</th>
+                      <th scope="col" className="px-4 py-3 font-semibold">Tarif Disetujui</th>
+                      <th scope="col" className="px-4 py-3 font-semibold">Keterangan / Alasan</th>
                       <th scope="col" className="px-4 py-3 font-semibold text-right">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {isLoading ? (
                       <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-xs text-slate-400">
+                        <td colSpan={6} className="px-4 py-8 text-center text-xs text-slate-400">
                           Memuat data keringanan santri...
                         </td>
                       </tr>
                     ) : filteredDiscounts.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-4 py-8 text-center text-xs text-slate-400">
+                        <td colSpan={6} className="px-4 py-8 text-center text-xs text-slate-400">
                           {studentSearch.trim()
                             ? 'Tidak ada santri penerima keringanan dengan kata kunci tersebut.'
                             : 'Belum ada santri yang didaftarkan menerima keringanan tarif SPP.'}
@@ -310,6 +250,11 @@ export function SppPricingTab() {
                             </div>
                           </td>
                           <td className="px-4 py-3 text-xs">
+                            <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-semibold text-[11px]">
+                              {discount.student?.entry_year || '-'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs">
                             <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/60 font-medium text-[11px]">
                               {discount.student?.classroom?.name || '-'}
                             </span>
@@ -320,7 +265,7 @@ export function SppPricingTab() {
                             </span>
                             <span className="text-[10px] text-slate-400 block">/ bulan</span>
                           </td>
-                          <td className="px-4 py-3 text-xs text-slate-600 max-w-[220px]">
+                          <td className="px-4 py-3 text-xs text-slate-600 max-w-[200px]">
                             <span className="truncate block" title={discount.notes || '-'}>
                               {discount.notes || '-'}
                             </span>
@@ -350,11 +295,9 @@ export function SppPricingTab() {
 
       {/* Modals */}
       <CreateSppStandardPricingModal
-        open={isStandardModalOpen}
-        onOpenChange={setIsStandardModalOpen}
-        academicYears={academicYears}
-        classes={classes}
-        defaultAcademicYearId={activeAcademicYear?.id}
+        open={isCohortModalOpen}
+        onOpenChange={setIsCohortModalOpen}
+        defaultEntryYear={new Date().getFullYear()}
       />
 
       <CreateSppStudentDiscountModal
@@ -371,8 +314,8 @@ export function SppPricingTab() {
         title="Hapus Konfigurasi Tarif SPP"
         description={
           deletingConfig?.student_id
-            ? `Apakah Anda yakin ingin menghapus keringanan tarif untuk santri "${deletingConfig.student?.name}"? Santri ini selanjutnya akan dikenakan tarif reguler.`
-            : 'Apakah Anda yakin ingin menghapus konfigurasi tarif ini?'
+            ? `Apakah Anda yakin ingin menghapus keringanan tarif untuk santri "${deletingConfig.student?.name}"? Santri ini selanjutnya akan dikenakan tarif reguler sesuai angkatannya.`
+            : `Apakah Anda yakin ingin menghapus konfigurasi tarif untuk Angkatan ${deletingConfig?.entry_year || ''}?`
         }
         confirmText="Ya, Hapus"
         variant="danger"

@@ -38,6 +38,7 @@ import { Student } from '../types';
 const formSchema = z.object({
   nis: z.string().min(3, 'NIS minimal 3 karakter').max(50),
   name: z.string().min(3, 'Nama minimal 3 karakter').max(255),
+  entry_year: z.string().min(4, 'Tahun Masuk minimal 4 digit').refine((val) => !isNaN(Number(val)) && Number(val) >= 2000, { message: 'Tahun Masuk harus valid (>= 2000)' }),
   class_id: z.string().min(1, 'Kelas wajib dipilih'),
   dormitory_id: z.string().optional().nullable(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'GRADUATED']),
@@ -61,6 +62,7 @@ export function EditStudentModal({ student, isOpen, onClose }: EditStudentModalP
     defaultValues: {
       nis: '',
       name: '',
+      entry_year: '',
       class_id: '',
       dormitory_id: 'none',
       status: 'ACTIVE',
@@ -72,6 +74,7 @@ export function EditStudentModal({ student, isOpen, onClose }: EditStudentModalP
       form.reset({
         nis: student.nis,
         name: student.name,
+        entry_year: student.entry_year ? student.entry_year.toString() : new Date().getFullYear().toString(),
         class_id: student.class_id ? student.class_id.toString() : '',
         dormitory_id: student.dormitory_id ? student.dormitory_id.toString() : 'none',
         status: student.status,
@@ -85,6 +88,7 @@ export function EditStudentModal({ student, isOpen, onClose }: EditStudentModalP
     const payload = {
       id: student.id,
       ...values,
+      entry_year: parseInt(values.entry_year),
       class_id: parseInt(values.class_id),
       dormitory_id: values.dormitory_id && values.dormitory_id !== 'none' ? parseInt(values.dormitory_id) : null,
     };
@@ -115,15 +119,29 @@ export function EditStudentModal({ student, isOpen, onClose }: EditStudentModalP
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <FormField
                 control={form.control}
                 name="nis"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-semibold text-slate-700">NIS (Nomor Induk)</FormLabel>
+                    <FormLabel className="text-xs font-semibold text-slate-700">NIS</FormLabel>
                     <FormControl>
                       <Input placeholder="Contoh: 2024001" className="h-10 rounded-xl text-sm" {...field} />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="entry_year"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-semibold text-slate-700">Angkatan</FormLabel>
+                    <FormControl>
+                      <Input type="number" placeholder="2026" className="h-10 rounded-xl text-sm" {...field} />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -143,9 +161,9 @@ export function EditStudentModal({ student, isOpen, onClose }: EditStudentModalP
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="ACTIVE">Aktif Belajar</SelectItem>
+                        <SelectItem value="ACTIVE">Aktif</SelectItem>
                         <SelectItem value="INACTIVE">Tidak Aktif</SelectItem>
-                        <SelectItem value="GRADUATED">Lulus / Alumni</SelectItem>
+                        <SelectItem value="GRADUATED">Lulus</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage className="text-xs" />

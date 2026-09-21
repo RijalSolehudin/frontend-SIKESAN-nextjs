@@ -7,6 +7,7 @@ import {
 } from '../types';
 
 interface GetSppConfigurationsParams {
+  entry_year?: number;
   academic_year_id?: number;
   type?: 'student' | 'standard';
 }

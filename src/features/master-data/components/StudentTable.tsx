@@ -123,6 +123,7 @@ export function StudentTable({ data, isLoading, isError, onRetry, pagination }: 
               <tr>
                 <th scope="col" className="px-5 py-3.5 font-semibold">NIS</th>
                 <th scope="col" className="px-5 py-3.5 font-semibold">Nama Santri</th>
+                <th scope="col" className="px-5 py-3.5 font-semibold">Angkatan</th>
                 <th scope="col" className="px-5 py-3.5 font-semibold">Kelas</th>
                 <th scope="col" className="px-5 py-3.5 font-semibold">Asrama</th>
                 <th scope="col" className="px-5 py-3.5 font-semibold">Wali Santri</th>
@@ -136,6 +137,11 @@ export function StudentTable({ data, isLoading, isError, onRetry, pagination }: 
                 <tr key={student.id} className="hover:bg-slate-50/80 transition-colors">
                   <td className="px-5 py-3.5 font-semibold text-slate-900">{student.nis}</td>
                   <td className="px-5 py-3.5 font-medium text-slate-800">{student.name}</td>
+                  <td className="px-5 py-3.5 text-xs">
+                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-semibold">
+                      {student.entry_year || '-'}
+                    </span>
+                  </td>
                   <td className="px-5 py-3.5 text-xs text-slate-600">
                     <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/60 font-medium">
                       {student.classroom?.name || 'Belum diatur'}
