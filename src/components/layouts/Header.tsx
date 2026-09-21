@@ -120,7 +120,7 @@ export function Header() {
       {/* Date Pill Widget */}
       <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100/80 border border-slate-200/60 text-xs text-slate-600 font-medium">
         <Calendar className="h-3.5 w-3.5 text-emerald-600" />
-        <span>{currentDate}</span>
+        <span suppressHydrationWarning>{currentDate}</span>
       </div>
 
       {/* Active System Pill */}
@@ -135,7 +135,7 @@ export function Header() {
           render={
             <Button variant="ghost" className="relative h-9 w-9 rounded-xl p-0 hover:ring-2 hover:ring-emerald-500/30 transition-all">
               <Avatar className="h-9 w-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-sm font-semibold text-xs">
-                <AvatarFallback className="bg-transparent text-white font-bold">
+                <AvatarFallback className="bg-transparent text-white font-bold" suppressHydrationWarning>
                   {(user?.name || user?.username || 'A').charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -146,10 +146,10 @@ export function Header() {
           <DropdownMenuGroup>
             <DropdownMenuLabel className="font-normal px-3 py-2">
               <div className="flex flex-col space-y-1">
-                <p className="text-sm font-bold leading-none text-slate-800">
+                <p className="text-sm font-bold leading-none text-slate-800" suppressHydrationWarning>
                   {user?.name || user?.username || 'Petugas SIKESAN'}
                 </p>
-                <p className="text-xs leading-none text-slate-500">
+                <p className="text-xs leading-none text-slate-500" suppressHydrationWarning>
                   {user?.email || 'petugas@sikesan.id'}
                 </p>
               </div>

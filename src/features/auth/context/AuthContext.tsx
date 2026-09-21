@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useSyncExternalStore, useMemo, ReactNode } from 'react';
 
 export interface Role {
   id: number;
@@ -24,26 +24,61 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const authListeners = new Set<() => void>();
+function notifyAuthChange() {
+  authListeners.forEach((listener) => listener());
+}
+
+function subscribe(callback: () => void) {
+  authListeners.add(callback);
+  window.addEventListener('storage', callback);
+  return () => {
+    authListeners.delete(callback);
+    window.removeEventListener('storage', callback);
+  };
+}
+
+function getSnapshot(): string | null {
+  try {
+    return localStorage.getItem('sikesan_user');
+  } catch {
+    return null;
+  }
+}
+
+function getServerSnapshot(): string | null {
+  return null;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window === 'undefined') return null;
+  const storedUserJson = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const user = useMemo<User | null>(() => {
+    if (!storedUserJson) return null;
     try {
-      const storedUser = localStorage.getItem('sikesan_user');
-      return storedUser ? JSON.parse(storedUser) : null;
+      return JSON.parse(storedUserJson);
     } catch (e) {
       console.error('Failed to parse stored user', e);
       return null;
     }
-  });
+  }, [storedUserJson]);
 
   const login = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem('sikesan_user', JSON.stringify(userData));
+    try {
+      localStorage.setItem('sikesan_user', JSON.stringify(userData));
+      notifyAuthChange();
+    } catch (e) {
+      console.error('Failed to save user to localStorage', e);
+    }
   };
 
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('sikesan_user');
+    try {
+      localStorage.removeItem('sikesan_user');
+      notifyAuthChange();
+    } catch (e) {
+      console.error('Failed to remove user from localStorage', e);
+    }
   };
 
   return (
