@@ -18,8 +18,10 @@ import {
   School,
   AlertCircle,
   MessageCircle,
-  Clock
+  Clock,
+  Sliders,
 } from 'lucide-react';
+import { SppPricingTab } from './SppPricingTab';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -51,7 +53,7 @@ const MONTH_NAMES: Record<number, string> = {
 };
 
 export function SppView() {
-  const [activeTab, setActiveTab] = useState<'bills' | 'verifications'>('bills');
+  const [activeTab, setActiveTab] = useState<'bills' | 'verifications' | 'pricing'>('bills');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClassId, setSelectedClassId] = useState<string>('all');
   const [page, setPage] = useState(1);
@@ -215,9 +217,23 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
             </span>
           )}
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('pricing')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'pricing'
+            ? 'bg-emerald-600 text-white shadow-sm'
+            : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80'
+            }`}
+        >
+          <Sliders className="h-4 w-4" />
+          <span>Tarif SPP & Keringanan</span>
+        </button>
       </div>
 
-      {activeTab === 'verifications' ? (
+      {activeTab === 'pricing' ? (
+        <SppPricingTab />
+      ) : activeTab === 'verifications' ? (
         <div className="glass-card rounded-2xl p-5 sm:p-6 border shadow-sm">
           <SppVerificationTable onOpenReceipt={handleOpenReceipt} />
         </div>

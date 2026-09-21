@@ -159,7 +159,6 @@ test.describe('Alur Finansial Utama SIKESAN', () => {
     // 5. Pilih salah satu santri hasil pencarian
     const firstOption = modal.getByRole('option').first();
     await expect(firstOption).toBeVisible({ timeout: 5000 });
-    const studentText = await firstOption.textContent();
     await firstOption.click();
 
     // 6. Verifikasi santri terpilih ditampilkan pada tombol combobox

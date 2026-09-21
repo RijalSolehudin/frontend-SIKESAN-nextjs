@@ -1,4 +1,30 @@
-import { Student } from '@/features/master-data/types';
+import { Student, Classroom, AcademicYear } from '@/features/master-data/types';
+
+export interface SppConfiguration {
+  id: number;
+  academic_year_id: number;
+  class_id: number | null;
+  student_id: number | null;
+  amount: number;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+  academicYear?: AcademicYear;
+  classroom?: Classroom;
+  student?: Student;
+}
+
+export interface SppConfigurationsResponse {
+  data: SppConfiguration[];
+}
+
+export interface CreateSppConfigurationPayload {
+  academic_year_id: number;
+  class_id?: number | null;
+  student_id?: number | null;
+  amount: number;
+  notes?: string | null;
+}
 
 export interface TopUpRequest {
   id: string | number;
