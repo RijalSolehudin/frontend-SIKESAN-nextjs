@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sikesan-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      # Update API URL sesuai dengan service backend di produksi
+      - NEXT_PUBLIC_API_URL=http://backend:8000/api/v1
+    restart: unless-stopped
