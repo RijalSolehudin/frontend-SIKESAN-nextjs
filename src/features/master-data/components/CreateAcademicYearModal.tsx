@@ -51,6 +51,7 @@ export function CreateAcademicYearModal() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       name: '',
       start_date: `${currentYear}-07-01`,

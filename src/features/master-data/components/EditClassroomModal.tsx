@@ -27,7 +27,7 @@ import { useUpdateClass } from '../api/useUpdateClass';
 import { Classroom } from '../types';
 
 const formSchema = z.object({
-  name: z.string().min(3, 'Nama kelas minimal 3 karakter').max(100, 'Nama kelas maksimal 100 karakter'),
+  name: z.string().min(2, 'Nama kelas minimal 2 karakter').max(100, 'Nama kelas maksimal 100 karakter'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -43,6 +43,7 @@ export function EditClassroomModal({ classroom, isOpen, onClose }: EditClassroom
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       name: '',
     },

@@ -59,6 +59,7 @@ export function EditStudentModal({ student, isOpen, onClose }: EditStudentModalP
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       nis: '',
       name: '',

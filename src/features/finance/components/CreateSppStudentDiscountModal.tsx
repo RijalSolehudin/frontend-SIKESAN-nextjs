@@ -64,6 +64,7 @@ export function CreateSppStudentDiscountModal({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       student_id: '',
       academic_year_id: defaultAcademicYearId ? defaultAcademicYearId.toString() : '',

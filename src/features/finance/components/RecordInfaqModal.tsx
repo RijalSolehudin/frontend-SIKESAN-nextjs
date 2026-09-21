@@ -57,6 +57,7 @@ export function RecordInfaqModal() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       student_id: '0',
       category_id: '',

@@ -55,6 +55,7 @@ export function CreateTopUpModal() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       student_id: '',
       requested_amount: '',

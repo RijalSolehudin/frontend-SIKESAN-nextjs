@@ -53,6 +53,7 @@ export function EditAcademicYearModal({ academicYear, isOpen, onClose }: EditAca
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       name: '',
       start_date: '',

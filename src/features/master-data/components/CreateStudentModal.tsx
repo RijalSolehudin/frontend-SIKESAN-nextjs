@@ -55,6 +55,7 @@ export function CreateStudentModal() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       nis: '',
       name: '',

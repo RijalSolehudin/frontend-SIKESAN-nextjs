@@ -43,6 +43,7 @@ export function EditDormitoryModal({ dormitory, isOpen, onClose }: EditDormitory
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       name: '',
     },

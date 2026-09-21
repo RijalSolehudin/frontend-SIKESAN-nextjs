@@ -54,6 +54,7 @@ export function RecordExpenseModal() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       expense_category_id: '',
       amount: '',

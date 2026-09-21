@@ -56,6 +56,7 @@ export function CreateSppStandardPricingModal({
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       entry_year: defaultEntryYear ? defaultEntryYear.toString() : currentYear.toString(),
       amount: '',

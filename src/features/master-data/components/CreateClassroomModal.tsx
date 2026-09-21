@@ -28,7 +28,7 @@ import {
 import { useCreateClass } from '../api/useCreateClass';
 
 const formSchema = z.object({
-  name: z.string().min(3, 'Nama kelas minimal 3 karakter').max(100, 'Nama kelas maksimal 100 karakter'),
+  name: z.string().min(2, 'Nama kelas minimal 2 karakter').max(100, 'Nama kelas maksimal 100 karakter'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -39,6 +39,7 @@ export function CreateClassroomModal() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       name: '',
     },
@@ -76,7 +77,7 @@ export function CreateClassroomModal() {
             Masukkan nama rombongan belajar / tingkatan kelas santri.
           </DialogDescription>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
             <FormField
@@ -93,17 +94,17 @@ export function CreateClassroomModal() {
               )}
             />
             <DialogFooter className="mt-6 pt-3 border-t border-slate-100 flex flex-row justify-end gap-2">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setOpen(false)}
                 disabled={createMutation.isPending}
                 className="rounded-lg"
               >
                 Batal
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={createMutation.isPending}
                 className="rounded-lg font-semibold"
               >

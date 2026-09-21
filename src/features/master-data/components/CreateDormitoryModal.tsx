@@ -39,6 +39,7 @@ export function CreateDormitoryModal() {
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       name: '',
     },
