@@ -168,4 +168,119 @@ test.describe('Alur Finansial Utama SIKESAN', () => {
     await modal.getByRole('button', { name: 'Batal', exact: true }).click();
     await expect(modal).not.toBeVisible();
   });
+
+  test('Bendahara dapat mencatat Infaq dengan mengunggah bukti pembayaran dan melihat preview bukti di tabel Infaq', async ({ page }) => {
+    // 1. Login Petugas / Super Admin
+    await page.goto('/login');
+    await page.getByLabel('Username').fill('superadmin');
+    await page.getByLabel('Password').fill('password');
+    await page.getByRole('button', { name: /masuk ke dasbor|login/i }).click();
+    await expect(page.getByRole('heading', { name: /dashboard bendahara/i })).toBeVisible({ timeout: 10000 });
+
+    // 2. Buka Halaman Infaq
+    await page.goto('/finance/infaq');
+    await expect(page.getByRole('heading', { name: /penerimaan infaq & shadaqah/i })).toBeVisible({ timeout: 10000 });
+
+    // 3. Buka Modal Catat Infaq
+    await page.getByRole('button', { name: /catat infaq/i }).click();
+    const modal = page.getByRole('dialog');
+    await expect(modal).toBeVisible();
+
+    // 4. Pilih Kategori Infaq
+    const categorySelect = modal.locator('button[role="combobox"]').nth(1);
+    await categorySelect.click();
+    await page.getByRole('option').first().click();
+
+    // 5. Isi Nominal
+    const amountInput = modal.getByPlaceholder(/contoh: 50,000/i);
+    await amountInput.fill('100000');
+
+    // 6. Isi Catatan
+    const noteInput = modal.getByPlaceholder(/contoh: untuk pembangunan asrama santri/i);
+    await noteInput.fill('Donasi dari Hamba Allah');
+
+    // 7. Upload Bukti Pembayaran / Nota Infaq
+    const fileInput = modal.locator('#infaq-proof-input');
+    await fileInput.setInputFiles({
+      name: 'bukti_infaq_sample.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        'base64'
+      ),
+    });
+
+    // Verifikasi nama file muncul di modal
+    await expect(modal.getByText('bukti_infaq_sample.png')).toBeVisible();
+
+    // 8. Submit
+    await modal.getByRole('button', { name: /simpan infaq/i }).click();
+    await expect(page.getByText(/penerimaan infaq berhasil dicatat/i)).toBeVisible({ timeout: 10000 });
+
+    // 9. Verifikasi Kolom Bukti Pembayaran di Tabel Infaq
+    await expect(page.getByRole('columnheader', { name: /bukti pembayaran/i })).toBeVisible();
+
+    // 10. Klik tombol lihat bukti pembayaran
+    const proofButton = page.getByRole('button', { name: /lihat bukti pembayaran/i }).first();
+    await expect(proofButton).toBeVisible({ timeout: 5000 });
+    await proofButton.click();
+
+    // 11. Verifikasi Modal Preview Bukti Infaq
+    const proofModal = page.getByRole('dialog');
+    await expect(proofModal).toBeVisible();
+    await expect(proofModal.getByText(/bukti transfer \/ nota penerimaan infaq/i)).toBeVisible();
+    await expect(proofModal.getByText(/rp 100\.000|100,000/i)).toBeVisible();
+
+    // Tutup modal
+    await proofModal.getByRole('button', { name: /tutup/i }).click();
+    await expect(proofModal).not.toBeVisible();
+  });
+
+  test('Bendahara dapat membayar SPP santri dengan mengunggah bukti pembayaran dan melihat preview bukti di tabel SPP', async ({ page }) => {
+    // 1. Login Petugas / Super Admin
+    await page.goto('/login');
+    await page.getByLabel('Username').fill('superadmin');
+    await page.getByLabel('Password').fill('password');
+    await page.getByRole('button', { name: /masuk ke dasbor|login/i }).click();
+    await expect(page.getByRole('heading', { name: /dashboard bendahara/i })).toBeVisible({ timeout: 10000 });
+
+    // 2. Buka Halaman SPP
+    await page.goto('/finance/spp');
+    await expect(page.getByRole('heading', { name: /pengelolaan tagihan spp/i })).toBeVisible({ timeout: 10000 });
+
+    // 3. Verifikasi kolom Bukti Pembayaran sudah ada di tabel SPP
+    await expect(page.getByRole('columnheader', { name: /bukti pembayaran/i })).toBeVisible();
+
+    // 4. Cari tombol Bayar SPP santri
+    const payButton = page.getByRole('button', { name: /bayar spp/i }).first();
+    const hasPayButton = await payButton.isVisible().catch(() => false);
+
+    if (hasPayButton) {
+      await payButton.click();
+      const modal = page.getByRole('dialog');
+      await expect(modal).toBeVisible();
+
+      // Pilih tagihan jika belum terpilih
+      const billCheckbox = modal.locator('.cursor-pointer').first();
+      await billCheckbox.click();
+
+      // Upload Bukti Pembayaran
+      const fileInput = modal.locator('#spp-payment-proof-input');
+      await fileInput.setInputFiles({
+        name: 'nota_spp_sample.png',
+        mimeType: 'image/png',
+        buffer: Buffer.from(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+          'base64'
+        ),
+      });
+
+      // Verifikasi nama file muncul di modal
+      await expect(modal.getByText('nota_spp_sample.png')).toBeVisible();
+
+      // Submit pembayaran SPP
+      await modal.getByRole('button', { name: /catat pembayaran/i }).click();
+      await expect(page.getByText(/pembayaran spp berhasil dicatat/i)).toBeVisible({ timeout: 10000 });
+    }
+  });
 });

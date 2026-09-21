@@ -61,6 +61,12 @@ export interface StudentBill {
     id: string;
     status: string;
     total_paid_amount: number;
+    proof_url?: string | null;
+    proof_full_url?: string | null;
+    payment_method?: string | null;
+    payment_date?: string | null;
+    sender_bank_name?: string | null;
+    sender_account_holder?: string | null;
     created_at?: string;
   }>;
 }

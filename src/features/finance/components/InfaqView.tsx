@@ -4,17 +4,21 @@ import { useState } from 'react';
 import { RecordInfaqModal } from './RecordInfaqModal';
 import { useGetLedger } from '../api/useGetLedger';
 import { useGetTreasurerMetrics } from '@/features/dashboard/api/useGetTreasurerMetrics';
-import { HeartHandshake, ArrowUpRight, CheckCircle2, History } from 'lucide-react';
+import { HeartHandshake, ArrowUpRight, CheckCircle2, History, Receipt } from 'lucide-react';
 import { MetricCard } from '@/features/dashboard/components/MetricCard';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { DateRangeFilter, DateFilterValue } from '@/components/ui/date-range-filter';
+import { Button } from '@/components/ui/button';
+import { InfaqProofModal, InfaqProofItem } from './InfaqProofModal';
 
 export function InfaqView() {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(15);
   const [dateFilter, setDateFilter] = useState<DateFilterValue>({ preset: 'all' });
+  const [selectedInfaqProof, setSelectedInfaqProof] = useState<InfaqProofItem | null>(null);
+  const [infaqProofModalOpen, setInfaqProofModalOpen] = useState(false);
   const { data: metrics, isLoading: isLoadingMetrics } = useGetTreasurerMetrics();
   const { data: ledgerData, isLoading: isLoadingLedger, isError, refetch } = useGetLedger({ per_page: 100 });
 
@@ -137,6 +141,7 @@ export function InfaqView() {
                     <th scope="col" className="px-5 py-3.5 font-semibold">Tanggal</th>
                     <th scope="col" className="px-5 py-3.5 font-semibold">Keterangan / Donatur</th>
                     <th scope="col" className="px-5 py-3.5 font-semibold">Kategori</th>
+                    <th scope="col" className="px-5 py-3.5 font-semibold text-center">Bukti Pembayaran</th>
                     <th scope="col" className="px-5 py-3.5 font-semibold text-right">Nominal Donasi</th>
                   </tr>
                 </thead>
@@ -157,6 +162,26 @@ export function InfaqView() {
                         <span className="px-2.5 py-1 rounded-full text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200/80">
                           Infaq / Sedekah
                         </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-center">
+                        {trx.proof_url ? (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon-sm"
+                            onClick={() => {
+                              setSelectedInfaqProof(trx);
+                              setInfaqProofModalOpen(true);
+                            }}
+                            className="h-8 w-8 text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200/80 rounded-lg shadow-2xs transition-colors mx-auto"
+                            title="Lihat Bukti Pembayaran / Nota Infaq"
+                            aria-label="Lihat Bukti Pembayaran"
+                          >
+                            <Receipt className="h-4 w-4 text-emerald-600" />
+                          </Button>
+                        ) : (
+                          <span className="text-slate-300 font-bold text-xs select-none" title="Tidak ada lampiran bukti">-</span>
+                        )}
                       </td>
                       <td className="px-5 py-3.5 text-right font-extrabold text-emerald-700 tabular-nums">
                         {formatCurrency(trx.amount)}
@@ -182,6 +207,15 @@ export function InfaqView() {
           </div>
         )}
       </div>
+
+      <InfaqProofModal
+        infaq={selectedInfaqProof}
+        open={infaqProofModalOpen}
+        onOpenChange={(open) => {
+          setInfaqProofModalOpen(open);
+          if (!open) setSelectedInfaqProof(null);
+        }}
+      />
     </div>
   );
 }

@@ -26,7 +26,7 @@ import {
 import { usePaySpp } from '../api/usePaySpp';
 import { SppBill } from '../types';
 import { Student } from '@/features/master-data/types';
-import { CreditCard, Calendar, Check } from 'lucide-react';
+import { CreditCard, Calendar, Check, UploadCloud, FileText, ImageIcon, X } from 'lucide-react';
 
 const formSchema = z.object({
   total_amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
@@ -54,15 +54,53 @@ interface SppPaymentFormProps {
 function SppPaymentForm({ student, bills, onClose, onSuccessPayment }: SppPaymentFormProps) {
   const payMutation = usePaySpp();
   const [selectedBills, setSelectedBills] = useState<string[]>([]);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [inputKey, setInputKey] = useState(0);
 
   const unpaidBills = bills.filter((b) => b.status !== 'PAID');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+    mode: 'onTouched',
     defaultValues: {
       total_amount: '',
     },
   });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ukuran file maksimal adalah 5MB');
+      return;
+    }
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'application/pdf'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Format file harus berupa JPG, PNG, WEBP, atau PDF');
+      return;
+    }
+
+    setSelectedFile(file);
+
+    if (file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  };
+
+  const handleRemoveFile = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setInputKey((prev) => prev + 1);
+  };
 
   const toggleBill = (id: string) => {
     const isSelected = selectedBills.includes(id);
@@ -95,9 +133,11 @@ function SppPaymentForm({ student, bills, onClose, onSuccessPayment }: SppPaymen
       student_id: student.id,
       bill_ids: selectedBills,
       total_amount: parseInt(values.total_amount),
+      proof: selectedFile,
     }, {
       onSuccess: (response: any) => {
         toast.success('Pembayaran SPP berhasil dicatat (Cash/Transfer)');
+        handleRemoveFile();
         const paymentId = response?.data?.id;
         if (paymentId && onSuccessPayment) {
           onSuccessPayment(paymentId);
@@ -204,6 +244,78 @@ function SppPaymentForm({ student, bills, onClose, onSuccessPayment }: SppPaymen
               </FormItem>
             )}
           />
+
+          {/* Bukti Pembayaran / Nota Kasir Upload Field */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
+              <span>Bukti Pembayaran / Nota Kasir</span>
+              <span className="text-[10px] text-slate-400 font-normal">Opsional (JPG, PNG, PDF maks 5MB)</span>
+            </label>
+
+            <input
+              key={inputKey}
+              id="spp-payment-proof-input"
+              type="file"
+              accept="image/jpeg,image/png,image/jpg,image/webp,application/pdf"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+
+            {!selectedFile ? (
+              <label
+                htmlFor="spp-payment-proof-input"
+                className="border-2 border-dashed border-slate-200 hover:border-emerald-500/60 hover:bg-emerald-50/20 rounded-xl p-3 transition-colors cursor-pointer flex items-center justify-center gap-3 text-center"
+              >
+                <div className="h-8 w-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <UploadCloud className="h-4 w-4" />
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-semibold text-slate-700">Pilih atau unggah bukti pembayaran</p>
+                  <p className="text-[11px] text-slate-400">Klik di sini untuk memilih foto nota / bukti transfer</p>
+                </div>
+              </label>
+            ) : (
+              <div className="flex items-center justify-between p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/40 text-xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  {previewUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="h-10 w-10 rounded-lg object-cover border border-emerald-200 shrink-0"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-lg bg-emerald-100/80 text-emerald-700 flex items-center justify-center shrink-0">
+                      {selectedFile.type === 'application/pdf' ? (
+                        <FileText className="h-5 w-5" />
+                      ) : (
+                        <ImageIcon className="h-5 w-5" />
+                      )}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-800 truncate max-w-[240px] text-xs">
+                      {selectedFile.name}
+                    </p>
+                    <p className="text-[10px] text-slate-500">
+                      {(selectedFile.size / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={handleRemoveFile}
+                  className="h-7 w-7 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg shrink-0"
+                  title="Hapus file bukti"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
 
           <DialogFooter className="mt-6 pt-3 border-t border-slate-100 flex flex-row justify-end gap-2">
             <Button 

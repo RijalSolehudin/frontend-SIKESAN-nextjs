@@ -50,16 +50,16 @@ export function ProofPreviewModal({ payment, open, onOpenChange }: ProofPreviewM
               </span>
             </div>
             <div>
-              <span className="text-slate-400 block font-medium">Bank Pengirim</span>
+              <span className="text-slate-400 block font-medium">Metode / Bank</span>
               <span className="font-semibold text-slate-700 flex items-center gap-1">
                 <Building className="h-3 w-3 text-slate-400" />
-                {payment.sender_bank_name || 'Transfer Bank'}
+                {payment.sender_bank_name || (payment.payment_method === 'CASH' ? 'Kasir Tunai' : 'Transfer Bank')}
               </span>
             </div>
             <div>
-              <span className="text-slate-400 block font-medium">Total Ditransfer</span>
+              <span className="text-slate-400 block font-medium">Total Pembayaran</span>
               <span className="font-extrabold text-emerald-700 text-sm">
-                Rp {payment.total_paid_amount.toLocaleString('id-ID')}
+                Rp {Number(payment.total_paid_amount || 0).toLocaleString('id-ID')}
               </span>
             </div>
             <div>

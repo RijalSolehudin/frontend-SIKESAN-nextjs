@@ -7,6 +7,7 @@ import { useGetStudentBills } from '../api/useGetStudentBills';
 import { GenerateSppModal } from './GenerateSppModal';
 import { SppPaymentModal } from './SppPaymentModal';
 import { SppReceiptModal } from './SppReceiptModal';
+import { ProofPreviewModal } from './ProofPreviewModal';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { Student } from '@/features/master-data/types';
 import {
@@ -64,6 +65,10 @@ export function SppView() {
   // State for SPP Receipt Modal
   const [receiptPaymentId, setReceiptPaymentId] = useState<string | null>(null);
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
+
+  // State for SPP Proof Preview Modal
+  const [selectedProofPayment, setSelectedProofPayment] = useState<any | null>(null);
+  const [proofModalOpen, setProofModalOpen] = useState(false);
 
   const handleOpenReceipt = (paymentId: string) => {
     setReceiptPaymentId(paymentId);
@@ -330,6 +335,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
                       <th scope="col" className="px-5 py-3.5 font-semibold">Kelas</th>
                       <th scope="col" className="px-5 py-3.5 font-semibold">Asrama</th>
                       <th scope="col" className="px-5 py-3.5 font-semibold">Tunggakan Bulan</th>
+                      <th scope="col" className="px-5 py-3.5 font-semibold text-center">Bukti Pembayaran</th>
                       <th scope="col" className="px-5 py-3.5 font-semibold text-center">Pengingat</th>
                       <th scope="col" className="px-5 py-3.5 font-semibold text-right">Aksi</th>
                     </tr>
@@ -337,7 +343,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
                   <tbody className="divide-y divide-slate-100">
                     {isLoadingStudents ? (
                       <tr>
-                        <td colSpan={7} className="px-5 py-10 text-center text-slate-400 text-xs">
+                        <td colSpan={8} className="px-5 py-10 text-center text-slate-400 text-xs">
                           <div className="flex items-center justify-center gap-2">
                             <div className="h-5 w-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
                             <span>Memuat data tagihan SPP...</span>
@@ -346,7 +352,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
                       </tr>
                     ) : studentsList.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-5 py-10 text-center text-slate-400 text-xs">
+                        <td colSpan={8} className="px-5 py-10 text-center text-slate-400 text-xs">
                           Tidak ada santri yang ditemukan pada filter ini.
                         </td>
                       </tr>
@@ -431,6 +437,35 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
                                   )}
                                 </div>
                               )}
+                            </td>
+                            <td className="px-5 py-3.5 text-center whitespace-nowrap">
+                              {(() => {
+                                const paymentWithProof = student.bills
+                                  ?.flatMap((b) => b.payments || [])
+                                  ?.find((p) => p.proof_url || p.proof_full_url);
+
+                                return paymentWithProof ? (
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon-sm"
+                                    onClick={() => {
+                                      setSelectedProofPayment({
+                                        ...paymentWithProof,
+                                        bills: [{ student }],
+                                      });
+                                      setProofModalOpen(true);
+                                    }}
+                                    className="h-8 w-8 text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200/80 rounded-lg shadow-2xs transition-colors mx-auto"
+                                    title="Lihat Foto Bukti Pembayaran / Nota SPP"
+                                    aria-label="Lihat Bukti Pembayaran"
+                                  >
+                                    <Receipt className="h-4 w-4 text-emerald-600" />
+                                  </Button>
+                                ) : (
+                                  <span className="text-slate-300 font-bold text-xs select-none" title="Tidak ada lampiran bukti">-</span>
+                                );
+                              })()}
                             </td>
                             <td className="px-5 py-3.5 text-center whitespace-nowrap">
                               <Button
@@ -551,6 +586,15 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
         onClose={() => {
           setReceiptModalOpen(false);
           setReceiptPaymentId(null);
+        }}
+      />
+
+      <ProofPreviewModal
+        payment={selectedProofPayment}
+        open={proofModalOpen}
+        onOpenChange={(open) => {
+          setProofModalOpen(open);
+          if (!open) setSelectedProofPayment(null);
         }}
       />
     </div>
