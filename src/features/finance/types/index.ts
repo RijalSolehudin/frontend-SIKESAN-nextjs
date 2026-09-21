@@ -7,6 +7,8 @@ export interface TopUpRequest {
   payment_method: string;
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   approved_by: number | null;
+  proof_url?: string | null;
+  proof_full_url?: string | null;
   student?: Student;
   created_at: string;
   updated_at: string;

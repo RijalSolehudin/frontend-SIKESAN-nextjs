@@ -8,8 +8,9 @@ import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { CheckCircle2, Clock, XCircle, ArrowDownToLine } from 'lucide-react';
+import { CheckCircle2, Clock, XCircle, ArrowDownToLine, Receipt } from 'lucide-react';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
+import { TopUpProofModal } from './TopUpProofModal';
 
 interface TopUpTableProps {
   data?: TopUpRequest[];
@@ -28,6 +29,7 @@ interface TopUpTableProps {
 
 export function TopUpTable({ data, isLoading, isError, onRetry, pagination }: TopUpTableProps) {
   const [approvingId, setApprovingId] = useState<string | number | null>(null);
+  const [selectedProofTopUp, setSelectedProofTopUp] = useState<TopUpRequest | null>(null);
   const approveMutation = useApproveTopUp();
 
   if (isError) {
@@ -113,6 +115,7 @@ export function TopUpTable({ data, isLoading, isError, onRetry, pagination }: To
                 <th scope="col" className="px-5 py-3.5 font-semibold">Nominal Top Up</th>
                 <th scope="col" className="px-5 py-3.5 font-semibold">Metode Bayar</th>
                 <th scope="col" className="px-5 py-3.5 font-semibold">Status</th>
+                <th scope="col" className="px-5 py-3.5 font-semibold text-center">Bukti Pembayaran</th>
                 <th scope="col" className="px-5 py-3.5 font-semibold text-right">Aksi</th>
               </tr>
             </thead>
@@ -140,6 +143,23 @@ export function TopUpTable({ data, isLoading, isError, onRetry, pagination }: To
                     </span>
                   </td>
                   <td className="px-5 py-3.5">{renderStatus(req.status)}</td>
+                  <td className="px-5 py-3.5 text-center">
+                    {req.proof_url || req.proof_full_url ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        onClick={() => setSelectedProofTopUp(req)}
+                        className="h-8 w-8 text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200/80 rounded-lg shadow-2xs transition-colors mx-auto"
+                        title="Lihat Bukti Pembayaran / Nota"
+                        aria-label="Lihat Bukti Pembayaran"
+                      >
+                        <Receipt className="h-4 w-4 text-emerald-600" />
+                      </Button>
+                    ) : (
+                      <span className="text-slate-300 select-none font-bold text-xs" title="Tidak ada lampiran bukti">-</span>
+                    )}
+                  </td>
                   <td className="px-5 py-3.5 text-right">
                     {req.status === 'PENDING' ? (
                       <Button 
@@ -185,6 +205,12 @@ export function TopUpTable({ data, isLoading, isError, onRetry, pagination }: To
         confirmText="Ya, Setujui"
         variant="success"
         isLoading={approveMutation.isPending}
+      />
+
+      <TopUpProofModal
+        topUp={selectedProofTopUp}
+        open={!!selectedProofTopUp}
+        onOpenChange={(open) => !open && setSelectedProofTopUp(null)}
       />
     </>
   );

@@ -67,4 +67,69 @@ test.describe('Alur Finansial Utama SIKESAN', () => {
     // Verifikasi toast notifikasi sukses
     await expect(page.getByText(/permintaan top-up berhasil disetujui|top up request approved/i)).toBeVisible({ timeout: 10000 });
   });
+
+  test('Bendahara dapat membuat Top-Up dengan mengunggah bukti pembayaran dan melihat preview bukti di tabel', async ({ page }) => {
+    // 1. Login Petugas / Super Admin
+    await page.goto('/login');
+    await page.getByLabel('Username').fill('superadmin');
+    await page.getByLabel('Password').fill('password');
+    await page.getByRole('button', { name: /masuk ke dasbor|login/i }).click();
+
+    // Pastikan masuk ke dashboard
+    await expect(page.getByRole('heading', { name: /dashboard bendahara/i })).toBeVisible({ timeout: 10000 });
+
+    // 2. Navigasi ke Halaman Top-Up
+    await page.goto('/finance/top-up');
+    await expect(page.getByRole('heading', { name: /persetujuan top up/i })).toBeVisible({ timeout: 10000 });
+
+    // 3. Buka Modal Buat Permintaan Top-Up
+    await page.getByRole('button', { name: /buat permintaan top-up/i }).click();
+    const modal = page.getByRole('dialog');
+    await expect(modal).toBeVisible();
+
+    // Pilih Santri
+    const santriSelect = modal.locator('button[role="combobox"]').first();
+    await santriSelect.click();
+    await page.getByRole('option').first().click();
+
+    // Isi nominal
+    const amountInput = modal.getByPlaceholder(/contoh: 100,000/i);
+    await amountInput.fill('75000');
+
+    // Upload Bukti Pembayaran / Nota (file buffer)
+    const fileInput = modal.locator('#topup-proof-input');
+    await fileInput.setInputFiles({
+      name: 'bukti_transfer_sample.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        'base64'
+      ),
+    });
+
+    // Verifikasi preview file muncul di modal
+    await expect(modal.getByText('bukti_transfer_sample.png')).toBeVisible();
+
+    // Submit
+    await modal.getByRole('button', { name: /kirim permintaan/i }).click();
+    await expect(page.getByText(/permintaan top-up berhasil dibuat/i)).toBeVisible({ timeout: 10000 });
+
+    // 4. Verifikasi Kolom Bukti Pembayaran di Tabel
+    await expect(page.getByRole('columnheader', { name: /bukti pembayaran/i })).toBeVisible();
+
+    // Cari tombol preview bukti pembayaran di tabel
+    const proofButton = page.getByRole('button', { name: /lihat bukti pembayaran/i }).first();
+    await expect(proofButton).toBeVisible({ timeout: 5000 });
+    await proofButton.click();
+
+    // 5. Verifikasi Modal Preview Bukti Pembayaran
+    const proofModal = page.getByRole('dialog');
+    await expect(proofModal).toBeVisible();
+    await expect(proofModal.getByText(/bukti pembayaran \/ nota top-up/i)).toBeVisible();
+    await expect(proofModal.getByText(/rp 75\.000|75,000/i)).toBeVisible();
+
+    // Tutup modal
+    await proofModal.getByRole('button', { name: /tutup/i }).click();
+    await expect(proofModal).not.toBeVisible();
+  });
 });

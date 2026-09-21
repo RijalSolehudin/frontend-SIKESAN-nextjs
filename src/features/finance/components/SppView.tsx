@@ -9,12 +9,12 @@ import { SppPaymentModal } from './SppPaymentModal';
 import { SppReceiptModal } from './SppReceiptModal';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { Student } from '@/features/master-data/types';
-import { 
-  Search, 
-  Receipt, 
-  CreditCard, 
-  Users, 
-  CheckCircle2, 
+import {
+  Search,
+  Receipt,
+  CreditCard,
+  Users,
+  CheckCircle2,
   School,
   AlertCircle,
   MessageCircle,
@@ -88,7 +88,7 @@ export function SppView() {
   const { data: billsData } = useGetStudentBills(selectedStudent?.id);
 
   const studentsList = studentsData?.data || [];
-  const studentsWithTunggakan = studentsList.filter((s) => 
+  const studentsWithTunggakan = studentsList.filter((s) =>
     s.bills && s.bills.some((b) => b.status === 'UNPAID' || b.status === 'PARTIAL')
   ).length;
 
@@ -126,8 +126,8 @@ export function SppView() {
 
     const guardianName = primaryGuardian?.name || 'Bapak/Ibu Wali Santri';
 
-    const message = 
-`Assalamu'alaikum Warahmatullahi Wabarakatuh.
+    const message =
+      `Assalamu'alaikum Warahmatullahi Wabarakatuh.
 
 Yth. *${guardianName}*
 Wali dari Ananda: *${student.name}* (NIS: ${student.nis})
@@ -185,11 +185,10 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
         <button
           type="button"
           onClick={() => setActiveTab('bills')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 'bills'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80'
-          }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'bills'
+            ? 'bg-emerald-600 text-white shadow-sm'
+            : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80'
+            }`}
         >
           <Users className="h-4 w-4" />
           <span>Tagihan Santri</span>
@@ -198,21 +197,19 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
         <button
           type="button"
           onClick={() => setActiveTab('verifications')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-            activeTab === 'verifications'
-              ? 'bg-emerald-600 text-white shadow-sm'
-              : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80'
-          }`}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${activeTab === 'verifications'
+            ? 'bg-emerald-600 text-white shadow-sm'
+            : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80'
+            }`}
         >
           <Clock className={`h-4 w-4 ${activeTab === 'verifications' ? 'text-white' : 'text-amber-500'}`} />
           <span>Verifikasi Pembayaran Online</span>
           {pendingCount > 0 && (
             <span
-              className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold transition-all ${
-                activeTab === 'verifications'
-                  ? 'bg-white text-emerald-700'
-                  : 'bg-amber-500 text-white animate-pulse'
-              }`}
+              className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold transition-all ${activeTab === 'verifications'
+                ? 'bg-white text-emerald-700'
+                : 'bg-amber-500 text-white animate-pulse'
+                }`}
             >
               {pendingCount} Menunggu
             </span>
@@ -278,8 +275,8 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
 
                 {/* Class Filter Dropdown */}
                 <div className="w-full sm:w-52">
-                  <Select 
-                    value={selectedClassId} 
+                  <Select
+                    value={selectedClassId}
                     onValueChange={(val) => {
                       setSelectedClassId(val);
                       setPage(1);
@@ -303,235 +300,232 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
                 </div>
               </div>
 
-              <div className="text-xs text-slate-500 hidden md:block">
-                Tombol <strong className="text-slate-700">Bayar SPP</strong> aktif jika santri memiliki tagihan tertunggak
-              </div>
+
             </div>
 
             {/* SPP Bills Table */}
             <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left text-slate-600">
-                <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
-                  <tr>
-                    <th scope="col" className="px-5 py-3.5 font-semibold">NIS</th>
-                    <th scope="col" className="px-5 py-3.5 font-semibold">Nama Santri</th>
-                    <th scope="col" className="px-5 py-3.5 font-semibold">Kelas</th>
-                    <th scope="col" className="px-5 py-3.5 font-semibold">Asrama</th>
-                    <th scope="col" className="px-5 py-3.5 font-semibold">Tunggakan Bulan</th>
-                    <th scope="col" className="px-5 py-3.5 font-semibold text-center">Pengingat</th>
-                    <th scope="col" className="px-5 py-3.5 font-semibold text-right">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {isLoadingStudents ? (
+                  <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
                     <tr>
-                      <td colSpan={7} className="px-5 py-10 text-center text-slate-400 text-xs">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="h-5 w-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-                          <span>Memuat data tagihan SPP...</span>
-                        </div>
-                      </td>
+                      <th scope="col" className="px-5 py-3.5 font-semibold">NIS</th>
+                      <th scope="col" className="px-5 py-3.5 font-semibold">Nama Santri</th>
+                      <th scope="col" className="px-5 py-3.5 font-semibold">Kelas</th>
+                      <th scope="col" className="px-5 py-3.5 font-semibold">Asrama</th>
+                      <th scope="col" className="px-5 py-3.5 font-semibold">Tunggakan Bulan</th>
+                      <th scope="col" className="px-5 py-3.5 font-semibold text-center">Pengingat</th>
+                      <th scope="col" className="px-5 py-3.5 font-semibold text-right">Aksi</th>
                     </tr>
-                  ) : studentsList.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="px-5 py-10 text-center text-slate-400 text-xs">
-                        Tidak ada santri yang ditemukan pada filter ini.
-                      </td>
-                    </tr>
-                  ) : (
-                    studentsList.map((student) => {
-                      const unpaidBills = student.bills?.filter(
-                        (b) => b.status === 'UNPAID' || b.status === 'PARTIAL'
-                      ) || [];
-                      const pendingBills = student.bills?.filter(
-                        (b) => b.status === 'PENDING'
-                      ) || [];
-                      const hasUnpaidBills = unpaidBills.length > 0;
-                      const hasPendingBills = pendingBills.length > 0;
-                      const totalUnpaidAmount = unpaidBills.reduce(
-                        (acc, curr) => acc + curr.amount_billed, 
-                        0
-                      );
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {isLoadingStudents ? (
+                      <tr>
+                        <td colSpan={7} className="px-5 py-10 text-center text-slate-400 text-xs">
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="h-5 w-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                            <span>Memuat data tagihan SPP...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : studentsList.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-5 py-10 text-center text-slate-400 text-xs">
+                          Tidak ada santri yang ditemukan pada filter ini.
+                        </td>
+                      </tr>
+                    ) : (
+                      studentsList.map((student) => {
+                        const unpaidBills = student.bills?.filter(
+                          (b) => b.status === 'UNPAID' || b.status === 'PARTIAL'
+                        ) || [];
+                        const pendingBills = student.bills?.filter(
+                          (b) => b.status === 'PENDING'
+                        ) || [];
+                        const hasUnpaidBills = unpaidBills.length > 0;
+                        const hasPendingBills = pendingBills.length > 0;
+                        const totalUnpaidAmount = unpaidBills.reduce(
+                          (acc, curr) => acc + curr.amount_billed,
+                          0
+                        );
 
-                      const primaryGuardian = student.guardians?.find(
-                        (g) => g.pivot?.is_primary === 1 || g.pivot?.is_primary === true
-                      ) || student.guardians?.[0];
+                        const primaryGuardian = student.guardians?.find(
+                          (g) => g.pivot?.is_primary === 1 || g.pivot?.is_primary === true
+                        ) || student.guardians?.[0];
 
-                      return (
-                        <tr key={student.id} className="hover:bg-emerald-50/30 transition-colors">
-                          <td className="px-5 py-3.5 font-mono text-xs text-slate-500">{student.nis}</td>
-                          <td className="px-5 py-3.5 font-bold text-slate-900">{student.name}</td>
-                          <td className="px-5 py-3.5 text-xs text-slate-600">
-                            <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/60 font-medium">
-                              {student.classroom?.name || '-'}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3.5 text-xs text-slate-600">
-                            <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/60 font-medium">
-                              {student.dormitory?.name || 'Non-Mukim'}
-                            </span>
-                          </td>
-                          <td className="px-5 py-3.5 text-xs">
-                            {!hasUnpaidBills && !hasPendingBills ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80">
-                                <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                                Lunas
+                        return (
+                          <tr key={student.id} className="hover:bg-emerald-50/30 transition-colors">
+                            <td className="px-5 py-3.5 font-mono text-xs text-slate-500">{student.nis}</td>
+                            <td className="px-5 py-3.5 font-bold text-slate-900">{student.name}</td>
+                            <td className="px-5 py-3.5 text-xs text-slate-600">
+                              <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/60 font-medium">
+                                {student.classroom?.name || '-'}
                               </span>
-                            ) : (
-                              <div className="space-y-1">
-                                <div className="flex flex-wrap items-center gap-1 max-w-[280px]">
-                                  {/* Tagihan Tertunggak */}
-                                  {unpaidBills.map((bill) => {
-                                    const fullMonth = MONTH_NAMES[bill.period_month] || `Bulan ${bill.period_month}`;
-                                    const shortMonth = fullMonth.slice(0, 3);
-                                    return (
-                                      <span
-                                        key={bill.id}
-                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200/80 shadow-2xs"
-                                        title={`Tagihan ${fullMonth} ${bill.period_year} - Rp ${bill.amount_billed.toLocaleString('id-ID')}`}
-                                      >
-                                        <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                                        {shortMonth} {bill.period_year}
-                                      </span>
-                                    );
-                                  })}
+                            </td>
+                            <td className="px-5 py-3.5 text-xs text-slate-600">
+                              <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/60 font-medium">
+                                {student.dormitory?.name || 'Non-Mukim'}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-xs">
+                              {!hasUnpaidBills && !hasPendingBills ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80">
+                                  <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                  Lunas
+                                </span>
+                              ) : (
+                                <div className="space-y-1">
+                                  <div className="flex flex-wrap items-center gap-1 max-w-[280px]">
+                                    {/* Tagihan Tertunggak */}
+                                    {unpaidBills.map((bill) => {
+                                      const fullMonth = MONTH_NAMES[bill.period_month] || `Bulan ${bill.period_month}`;
+                                      const shortMonth = fullMonth.slice(0, 3);
+                                      return (
+                                        <span
+                                          key={bill.id}
+                                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200/80 shadow-2xs"
+                                          title={`Tagihan ${fullMonth} ${bill.period_year} - Rp ${bill.amount_billed.toLocaleString('id-ID')}`}
+                                        >
+                                          <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
+                                          {shortMonth} {bill.period_year}
+                                        </span>
+                                      );
+                                    })}
 
-                                  {/* Tagihan Menunggu Verifikasi */}
-                                  {pendingBills.map((bill) => {
-                                    const fullMonth = MONTH_NAMES[bill.period_month] || `Bulan ${bill.period_month}`;
-                                    const shortMonth = fullMonth.slice(0, 3);
-                                    return (
-                                      <span
-                                        key={bill.id}
-                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200/80 shadow-2xs"
-                                        title={`Menunggu Verifikasi: Tagihan ${fullMonth} ${bill.period_year}`}
-                                      >
-                                        <Clock className="h-2.5 w-2.5 text-amber-600" />
-                                        {shortMonth} {bill.period_year} (Menunggu)
-                                      </span>
-                                    );
-                                  })}
+                                    {/* Tagihan Menunggu Verifikasi */}
+                                    {pendingBills.map((bill) => {
+                                      const fullMonth = MONTH_NAMES[bill.period_month] || `Bulan ${bill.period_month}`;
+                                      const shortMonth = fullMonth.slice(0, 3);
+                                      return (
+                                        <span
+                                          key={bill.id}
+                                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold text-amber-800 bg-amber-50 border border-amber-200/80 shadow-2xs"
+                                          title={`Menunggu Verifikasi: Tagihan ${fullMonth} ${bill.period_year}`}
+                                        >
+                                          <Clock className="h-2.5 w-2.5 text-amber-600" />
+                                          {shortMonth} {bill.period_year} (Menunggu)
+                                        </span>
+                                      );
+                                    })}
+                                  </div>
+                                  {hasUnpaidBills && (
+                                    <span className="text-[10px] text-rose-600 font-medium block">
+                                      {unpaidBills.length} Bulan Tertunggak (Rp {totalUnpaidAmount.toLocaleString('id-ID')})
+                                    </span>
+                                  )}
                                 </div>
-                                {hasUnpaidBills && (
-                                  <span className="text-[10px] text-rose-600 font-medium block">
-                                    {unpaidBills.length} Bulan Tertunggak (Rp {totalUnpaidAmount.toLocaleString('id-ID')})
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-5 py-3.5 text-center whitespace-nowrap">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleSendWaReminder(student)}
-                              disabled={!hasUnpaidBills}
-                              className={`h-8 px-2.5 text-xs font-semibold gap-1.5 transition-all ${
-                                !hasUnpaidBills 
-                                  ? 'text-slate-400 bg-slate-50/50 border-slate-200 cursor-not-allowed opacity-50' 
-                                  : 'text-emerald-700 bg-emerald-50/60 hover:bg-emerald-100 border-emerald-200 hover:border-emerald-300 shadow-2xs'
-                              }`}
-                              title={
-                                !hasUnpaidBills 
-                                  ? 'Santri tidak memiliki tunggakan SPP' 
-                                  : primaryGuardian?.phone 
-                                  ? `Kirim pengingat WA ke ${primaryGuardian.name || 'Wali Santri'} (${primaryGuardian.phone})` 
-                                  : 'Nomor WhatsApp wali santri belum terdaftar di sistem'
-                              }
-                            >
-                              <MessageCircle className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                              <span>Kirim Pengingat</span>
-                            </Button>
-                          </td>
-                          <td className="px-5 py-3.5 text-right">
-                            {hasUnpaidBills ? (
+                              )}
+                            </td>
+                            <td className="px-5 py-3.5 text-center whitespace-nowrap">
                               <Button
-                                variant="default"
-                                size="sm"
-                                onClick={() => setSelectedStudent(student)}
-                                className="h-8 px-3 text-xs font-semibold shadow-2xs"
-                                title="Bayar Tagihan SPP"
-                              >
-                                <CreditCard className="h-3.5 w-3.5 mr-1" />
-                                Bayar SPP
-                              </Button>
-                            ) : hasPendingBills ? (
-                              <Button
+                                type="button"
                                 variant="outline"
                                 size="sm"
-                                disabled
-                                className="h-8 px-2.5 text-[11px] font-semibold text-amber-800 bg-amber-50 border-amber-200/80 cursor-not-allowed opacity-90"
-                                title="Ada pembayaran yang sedang menunggu verifikasi bendahara"
+                                onClick={() => handleSendWaReminder(student)}
+                                disabled={!hasUnpaidBills}
+                                className={`h-8 px-2.5 text-xs font-semibold gap-1.5 transition-all ${!hasUnpaidBills
+                                  ? 'text-slate-400 bg-slate-50/50 border-slate-200 cursor-not-allowed opacity-50'
+                                  : 'text-emerald-700 bg-emerald-50/60 hover:bg-emerald-100 border-emerald-200 hover:border-emerald-300 shadow-2xs'
+                                  }`}
+                                title={
+                                  !hasUnpaidBills
+                                    ? 'Santri tidak memiliki tunggakan SPP'
+                                    : primaryGuardian?.phone
+                                      ? `Kirim pengingat WA ke ${primaryGuardian.name || 'Wali Santri'} (${primaryGuardian.phone})`
+                                      : 'Nomor WhatsApp wali santri belum terdaftar di sistem'
+                                }
                               >
-                                <Clock className="h-3.5 w-3.5 mr-1 text-amber-600" />
-                                Menunggu Verifikasi
+                                <MessageCircle className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                <span>Kirim Pengingat</span>
                               </Button>
-                            ) : (
-                              <div className="flex items-center justify-end gap-1.5">
+                            </td>
+                            <td className="px-5 py-3.5 text-right">
+                              {hasUnpaidBills ? (
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  onClick={() => setSelectedStudent(student)}
+                                  className="h-8 px-3 text-xs font-semibold shadow-2xs"
+                                  title="Bayar Tagihan SPP"
+                                >
+                                  <CreditCard className="h-3.5 w-3.5 mr-1" />
+                                  Bayar SPP
+                                </Button>
+                              ) : hasPendingBills ? (
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   disabled
-                                  className="h-8 px-2.5 text-xs font-semibold text-slate-400 bg-slate-50 border-slate-200 cursor-not-allowed opacity-60"
-                                  title="Semua tagihan SPP santri ini telah lunas"
+                                  className="h-8 px-2.5 text-[11px] font-semibold text-amber-800 bg-amber-50 border-amber-200/80 cursor-not-allowed opacity-90"
+                                  title="Ada pembayaran yang sedang menunggu verifikasi bendahara"
                                 >
-                                  <CreditCard className="h-3.5 w-3.5 mr-1" />
-                                  Lunas
+                                  <Clock className="h-3.5 w-3.5 mr-1 text-amber-600" />
+                                  Menunggu Verifikasi
                                 </Button>
-                                {(() => {
-                                  const latestPaymentId = student.bills
-                                    ?.filter(b => b.status === 'PAID')
-                                    ?.flatMap(b => b.payments || [])
-                                    ?.find(p => p.status === 'APPROVED')?.id;
-                                  if (!latestPaymentId) return null;
-                                  return (
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleOpenReceipt(latestPaymentId)}
-                                      className="h-8 px-2 text-xs font-semibold text-emerald-700 bg-emerald-50/70 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 gap-1"
-                                      title="Lihat / Cetak Kwitansi Resmi Terakhir"
-                                    >
-                                      <Receipt className="h-3.5 w-3.5 text-emerald-600" />
-                                      <span>Kwitansi</span>
-                                    </Button>
-                                  );
-                                })()}
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+                              ) : (
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    disabled
+                                    className="h-8 px-2.5 text-xs font-semibold text-slate-400 bg-slate-50 border-slate-200 cursor-not-allowed opacity-60"
+                                    title="Semua tagihan SPP santri ini telah lunas"
+                                  >
+                                    <CreditCard className="h-3.5 w-3.5 mr-1" />
+                                    Lunas
+                                  </Button>
+                                  {(() => {
+                                    const latestPaymentId = student.bills
+                                      ?.filter(b => b.status === 'PAID')
+                                      ?.flatMap(b => b.payments || [])
+                                      ?.find(p => p.status === 'APPROVED')?.id;
+                                    if (!latestPaymentId) return null;
+                                    return (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleOpenReceipt(latestPaymentId)}
+                                        className="h-8 px-2 text-xs font-semibold text-emerald-700 bg-emerald-50/70 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 gap-1"
+                                        title="Lihat / Cetak Kwitansi Resmi Terakhir"
+                                      >
+                                        <Receipt className="h-3.5 w-3.5 text-emerald-600" />
+                                        <span>Kwitansi</span>
+                                      </Button>
+                                    );
+                                  })()}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <DataTablePagination
+                currentPage={studentsData?.current_page || page}
+                totalPages={studentsData?.last_page || 1}
+                totalItems={studentsData?.total || 0}
+                pageSize={studentsData?.per_page || perPage}
+                onPageChange={(newPage) => setPage(newPage)}
+                onPageSizeChange={(newSize) => {
+                  setPerPage(newSize);
+                  setPage(1);
+                }}
+                isLoading={isLoadingStudents}
+              />
             </div>
-
-            <DataTablePagination
-              currentPage={studentsData?.current_page || page}
-              totalPages={studentsData?.last_page || 1}
-              totalItems={studentsData?.total || 0}
-              pageSize={studentsData?.per_page || perPage}
-              onPageChange={(newPage) => setPage(newPage)}
-              onPageSizeChange={(newSize) => {
-                setPerPage(newSize);
-                setPage(1);
-              }}
-              isLoading={isLoadingStudents}
-            />
           </div>
-        </div>
-      </>
-    )}
+        </>
+      )}
 
-      <SppPaymentModal 
-        student={selectedStudent} 
-        bills={billsData || []} 
-        isOpen={!!selectedStudent} 
-        onClose={() => setSelectedStudent(null)} 
+      <SppPaymentModal
+        student={selectedStudent}
+        bills={billsData || []}
+        isOpen={!!selectedStudent}
+        onClose={() => setSelectedStudent(null)}
         onSuccessPayment={handleOpenReceipt}
       />
 

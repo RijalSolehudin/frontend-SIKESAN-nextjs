@@ -48,9 +48,8 @@ export const MoneyInput = React.forwardRef<HTMLInputElement, MoneyInputProps>(
           inputMode="numeric"
           value={displayValue}
           onChange={handleInputChange}
-          className={`${
-            prefix ? 'pl-9' : ''
-          } h-10 rounded-xl font-bold tabular-nums text-sm text-slate-900 ${className || ''}`}
+          className={`${prefix ? 'pl-9' : ''
+            } h-10 tabular-nums text-sm text-slate-500 ${className || ''}`}
         />
       </div>
     );
