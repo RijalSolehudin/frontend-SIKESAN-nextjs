@@ -9,15 +9,24 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { CheckCircle2, Clock, XCircle, ArrowDownToLine } from 'lucide-react';
+import { DataTablePagination } from '@/components/ui/data-table-pagination';
 
 interface TopUpTableProps {
   data?: TopUpRequest[];
   isLoading: boolean;
   isError: boolean;
   onRetry?: () => void;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    pageSize: number;
+    onPageChange: (page: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
+  };
 }
 
-export function TopUpTable({ data, isLoading, isError, onRetry }: TopUpTableProps) {
+export function TopUpTable({ data, isLoading, isError, onRetry, pagination }: TopUpTableProps) {
   const [approvingId, setApprovingId] = useState<string | number | null>(null);
   const approveMutation = useApproveTopUp();
 
@@ -94,63 +103,77 @@ export function TopUpTable({ data, isLoading, isError, onRetry }: TopUpTableProp
 
   return (
     <>
-      <div className="overflow-x-auto rounded-xl border border-slate-200/80 bg-white/60">
-        <table className="w-full text-sm text-left text-slate-600">
-          <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
-            <tr>
-              <th scope="col" className="px-5 py-3.5 font-semibold">Tanggal</th>
-              <th scope="col" className="px-5 py-3.5 font-semibold">Santri Pemilik</th>
-              <th scope="col" className="px-5 py-3.5 font-semibold">Nominal Top Up</th>
-              <th scope="col" className="px-5 py-3.5 font-semibold">Metode Bayar</th>
-              <th scope="col" className="px-5 py-3.5 font-semibold">Status</th>
-              <th scope="col" className="px-5 py-3.5 font-semibold text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {data.map((req) => (
-              <tr key={req.id} className="hover:bg-emerald-50/30 transition-colors">
-                <td className="px-5 py-3.5 text-xs text-slate-500">
-                  {new Date(req.created_at).toLocaleString('id-ID', {
-                    day: 'numeric',
-                    month: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </td>
-                <td className="px-5 py-3.5">
-                  <div className="font-bold text-slate-900">{req.student?.name}</div>
-                  <div className="text-xs text-slate-400 font-mono">NIS: {req.student?.nis}</div>
-                </td>
-                <td className="px-5 py-3.5 font-extrabold text-emerald-700 tabular-nums">
-                  Rp {req.requested_amount.toLocaleString('id-ID')}
-                </td>
-                <td className="px-5 py-3.5">
-                  <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700">
-                    {req.payment_method}
-                  </span>
-                </td>
-                <td className="px-5 py-3.5">{renderStatus(req.status)}</td>
-                <td className="px-5 py-3.5 text-right">
-                  {req.status === 'PENDING' ? (
-                    <Button 
-                      variant="default"
-                      size="sm"
-                      aria-label="Approve"
-                      onClick={() => setApprovingId(req.id)}
-                      disabled={approveMutation.isPending}
-                      className="h-8 px-3 text-xs"
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                      Setujui
-                    </Button>
-                  ) : (
-                    <span className="text-xs text-slate-400 italic">Selesai</span>
-                  )}
-                </td>
+      <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left text-slate-600">
+            <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
+              <tr>
+                <th scope="col" className="px-5 py-3.5 font-semibold">Tanggal</th>
+                <th scope="col" className="px-5 py-3.5 font-semibold">Santri Pemilik</th>
+                <th scope="col" className="px-5 py-3.5 font-semibold">Nominal Top Up</th>
+                <th scope="col" className="px-5 py-3.5 font-semibold">Metode Bayar</th>
+                <th scope="col" className="px-5 py-3.5 font-semibold">Status</th>
+                <th scope="col" className="px-5 py-3.5 font-semibold text-right">Aksi</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {data.map((req) => (
+                <tr key={req.id} className="hover:bg-emerald-50/30 transition-colors">
+                  <td className="px-5 py-3.5 text-xs text-slate-500">
+                    {new Date(req.created_at).toLocaleString('id-ID', {
+                      day: 'numeric',
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <div className="font-bold text-slate-900">{req.student?.name}</div>
+                    <div className="text-xs text-slate-400 font-mono">NIS: {req.student?.nis}</div>
+                  </td>
+                  <td className="px-5 py-3.5 font-extrabold text-emerald-700 tabular-nums">
+                    Rp {req.requested_amount.toLocaleString('id-ID')}
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700">
+                      {req.payment_method}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3.5">{renderStatus(req.status)}</td>
+                  <td className="px-5 py-3.5 text-right">
+                    {req.status === 'PENDING' ? (
+                      <Button 
+                        variant="default"
+                        size="sm"
+                        aria-label="Approve"
+                        onClick={() => setApprovingId(req.id)}
+                        disabled={approveMutation.isPending}
+                        className="h-8 px-3 text-xs"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                        Setujui
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-slate-400 italic">Selesai</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {pagination && (
+          <DataTablePagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            pageSize={pagination.pageSize}
+            onPageChange={pagination.onPageChange}
+            onPageSizeChange={pagination.onPageSizeChange}
+            isLoading={isLoading}
+          />
+        )}
       </div>
 
       <ConfirmModal

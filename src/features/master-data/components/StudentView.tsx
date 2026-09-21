@@ -11,11 +11,14 @@ import { MetricCard } from '@/features/dashboard/components/MetricCard';
 
 export function StudentView() {
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
   const debouncedSearch = useDebounce(searchTerm, 500);
 
   const { data, isLoading, isError, refetch } = useGetStudents({
     search: debouncedSearch,
-    per_page: 50,
+    page,
+    per_page: perPage,
   });
 
   const students = data?.data || [];
@@ -92,7 +95,10 @@ export function StudentView() {
               placeholder="Cari nama atau NIS santri..."
               className="pl-9 h-10 rounded-xl bg-white border-slate-200 text-sm focus:border-emerald-600"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1);
+              }}
             />
           </div>
 
@@ -103,7 +109,23 @@ export function StudentView() {
           </div>
         </div>
 
-        <StudentTable data={students} isLoading={isLoading} isError={isError} onRetry={() => refetch()} />
+        <StudentTable 
+          data={students} 
+          isLoading={isLoading} 
+          isError={isError} 
+          onRetry={() => refetch()} 
+          pagination={data ? {
+            currentPage: data.current_page || page,
+            totalPages: data.last_page || 1,
+            totalItems: data.total || 0,
+            pageSize: data.per_page || perPage,
+            onPageChange: (newPage) => setPage(newPage),
+            onPageSizeChange: (newSize) => {
+              setPerPage(newSize);
+              setPage(1);
+            },
+          } : undefined}
+        />
       </div>
     </div>
   );

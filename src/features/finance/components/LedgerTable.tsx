@@ -1,12 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import { useGetLedger } from '../api/useGetLedger';
 import { ArrowDownRight, ArrowUpRight, BookOpenText } from 'lucide-react';
 import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
+import { DataTablePagination } from '@/components/ui/data-table-pagination';
 
 export function LedgerTable() {
-  const { data, isLoading, isError, refetch } = useGetLedger({ per_page: 50 });
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(15);
+  const { data, isLoading, isError, refetch } = useGetLedger({ page, per_page: perPage });
 
   const formatCurrency = (amount: number = 0) => {
     return new Intl.NumberFormat('id-ID', {
@@ -61,68 +65,75 @@ export function LedgerTable() {
   };
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200/80 bg-white/60">
-      <table className="w-full text-sm text-left text-slate-600">
-        <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
-          <tr>
-            <th scope="col" className="px-5 py-3.5 font-semibold">Waktu / Tanggal</th>
-            <th scope="col" className="px-5 py-3.5 font-semibold">Klasifikasi</th>
-            <th scope="col" className="px-5 py-3.5 font-semibold">Keterangan Transaksi</th>
-            <th scope="col" className="px-5 py-3.5 font-semibold text-right">Debet (Masuk)</th>
-            <th scope="col" className="px-5 py-3.5 font-semibold text-right">Kredit (Keluar)</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {data.data.map((trx, index) => (
-            <tr key={`${trx.reference_id}-${index}`} className="hover:bg-emerald-50/30 transition-colors">
-              <td className="px-5 py-3.5 text-xs text-slate-500 font-mono">
-                {new Date(trx.date).toLocaleString('id-ID', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </td>
-              <td className="px-5 py-3.5">
-                {getTypeBadge(trx.type)}
-              </td>
-              <td className="px-5 py-3.5">
-                <div className="font-bold text-slate-900 line-clamp-1">{trx.description}</div>
-                <div className="text-[11px] text-slate-400 font-mono">Ref: {trx.reference_id || '-'}</div>
-              </td>
-              <td className="px-5 py-3.5 text-right font-extrabold tabular-nums">
-                {trx.is_debit ? (
-                  <span className="inline-flex items-center justify-end text-emerald-700 font-bold">
-                    <ArrowDownRight className="w-3.5 h-3.5 mr-0.5 text-emerald-600" />
-                    {formatCurrency(trx.amount)}
-                  </span>
-                ) : (
-                  <span className="text-slate-300">-</span>
-                )}
-              </td>
-              <td className="px-5 py-3.5 text-right font-extrabold tabular-nums">
-                {!trx.is_debit ? (
-                  <span className="inline-flex items-center justify-end text-rose-600 font-bold">
-                    <ArrowUpRight className="w-3.5 h-3.5 mr-0.5 text-rose-500" />
-                    {formatCurrency(trx.amount)}
-                  </span>
-                ) : (
-                  <span className="text-slate-300">-</span>
-                )}
-              </td>
+    <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm text-left text-slate-600">
+          <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
+            <tr>
+              <th scope="col" className="px-5 py-3.5 font-semibold">Waktu / Tanggal</th>
+              <th scope="col" className="px-5 py-3.5 font-semibold">Klasifikasi</th>
+              <th scope="col" className="px-5 py-3.5 font-semibold">Keterangan Transaksi</th>
+              <th scope="col" className="px-5 py-3.5 font-semibold text-right">Debet (Masuk)</th>
+              <th scope="col" className="px-5 py-3.5 font-semibold text-right">Kredit (Keluar)</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      
-      {data.last_page > 1 && (
-        <div className="p-3 border-t border-slate-100 bg-slate-50/70 flex justify-end">
-          <p className="text-xs text-slate-400">
-            Menampilkan {data.data.length} transaksi terakhir
-          </p>
-        </div>
-      )}
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {data.data.map((trx, index) => (
+              <tr key={`${trx.reference_id}-${index}`} className="hover:bg-emerald-50/30 transition-colors">
+                <td className="px-5 py-3.5 text-xs text-slate-500 font-mono">
+                  {new Date(trx.date).toLocaleString('id-ID', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </td>
+                <td className="px-5 py-3.5">
+                  {getTypeBadge(trx.type)}
+                </td>
+                <td className="px-5 py-3.5">
+                  <div className="font-bold text-slate-900 line-clamp-1">{trx.description}</div>
+                  <div className="text-[11px] text-slate-400 font-mono">Ref: {trx.reference_id || '-'}</div>
+                </td>
+                <td className="px-5 py-3.5 text-right font-extrabold tabular-nums">
+                  {trx.is_debit ? (
+                    <span className="inline-flex items-center justify-end text-emerald-700 font-bold">
+                      <ArrowDownRight className="w-3.5 h-3.5 mr-0.5 text-emerald-600" />
+                      {formatCurrency(trx.amount)}
+                    </span>
+                  ) : (
+                    <span className="text-slate-300">-</span>
+                  )}
+                </td>
+                <td className="px-5 py-3.5 text-right font-extrabold tabular-nums">
+                  {!trx.is_debit ? (
+                    <span className="inline-flex items-center justify-end text-rose-600 font-bold">
+                      <ArrowUpRight className="w-3.5 h-3.5 mr-0.5 text-rose-500" />
+                      {formatCurrency(trx.amount)}
+                    </span>
+                  ) : (
+                    <span className="text-slate-300">-</span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <DataTablePagination
+        currentPage={data.current_page || page}
+        totalPages={data.last_page || 1}
+        totalItems={data.total || 0}
+        pageSize={data.per_page || perPage}
+        onPageChange={(newPage) => setPage(newPage)}
+        onPageSizeChange={(newSize) => {
+          setPerPage(newSize);
+          setPage(1);
+        }}
+        isLoading={isLoading}
+      />
     </div>
   );
 }

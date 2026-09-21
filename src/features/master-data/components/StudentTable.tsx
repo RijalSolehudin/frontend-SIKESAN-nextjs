@@ -12,14 +12,24 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Pencil, Trash2, Users, UserCheck, CheckCircle2, XCircle, Award } from 'lucide-react';
 
+import { DataTablePagination } from '@/components/ui/data-table-pagination';
+
 interface StudentTableProps {
   data?: Student[];
   isLoading: boolean;
   isError: boolean;
   onRetry?: () => void;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    pageSize: number;
+    onPageChange: (page: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
+  };
 }
 
-export function StudentTable({ data, isLoading, isError, onRetry }: StudentTableProps) {
+export function StudentTable({ data, isLoading, isError, onRetry, pagination }: StudentTableProps) {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [mappingStudent, setMappingStudent] = useState<Student | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -106,91 +116,105 @@ export function StudentTable({ data, isLoading, isError, onRetry }: StudentTable
 
   return (
     <>
-      <div className="overflow-x-auto rounded-xl border border-slate-200/80 bg-white/60">
-        <table className="w-full text-sm text-left text-slate-600">
-          <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
-            <tr>
-              <th scope="col" className="px-5 py-3.5 font-semibold">NIS</th>
-              <th scope="col" className="px-5 py-3.5 font-semibold">Nama Santri</th>
-              <th scope="col" className="px-5 py-3.5 font-semibold">Kelas</th>
-              <th scope="col" className="px-5 py-3.5 font-semibold">Asrama</th>
-              <th scope="col" className="px-5 py-3.5 font-semibold">Wali Santri</th>
-              <th scope="col" className="px-5 py-3.5 font-semibold">Status</th>
-              <th scope="col" className="px-5 py-3.5 font-semibold">Saldo Dompet</th>
-              <th scope="col" className="px-5 py-3.5 font-semibold text-right">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {data.map((student) => (
-              <tr key={student.id} className="hover:bg-emerald-50/30 transition-colors">
-                <td className="px-5 py-3.5 font-mono text-xs text-slate-500">{student.nis}</td>
-                <td className="px-5 py-3.5 font-bold text-slate-900">{student.name}</td>
-                <td className="px-5 py-3.5 text-xs text-slate-600">
-                  <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/60 font-medium">
-                    {student.classroom?.name || 'Belum diatur'}
-                  </span>
-                </td>
-                <td className="px-5 py-3.5 text-xs">
-                  {student.dormitory ? (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200/60 font-medium">
-                      {student.dormitory.name}
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/70 font-medium text-[11px]">
-                      Non-Mukim
-                    </span>
-                  )}
-                </td>
-                <td className="px-5 py-3.5 text-xs">
-                  {student.guardians && student.guardians.length > 0 ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/70 font-medium">
-                      <UserCheck className="h-3 w-3 text-emerald-600 shrink-0" />
-                      <span className="truncate max-w-[130px]">{student.guardians[0].username || student.guardians[0].name || 'Wali Santri'}</span>
-                    </span>
-                  ) : (
-                    <span className="text-slate-400 italic">Belum dipetakan</span>
-                  )}
-                </td>
-                <td className="px-5 py-3.5">{renderStatus(student.status)}</td>
-                <td className="px-5 py-3.5 font-bold text-slate-900 tabular-nums">
-                  {formatCurrency(student.wallet?.balance || 0)}
-                </td>
-                <td className="px-5 py-3.5 text-right">
-                  <div className="inline-flex items-center gap-1.5">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setMappingStudent(student)}
-                      className="h-8 px-2.5 text-xs text-blue-700 bg-blue-50/60 border-blue-200 hover:bg-blue-100"
-                    >
-                      <UserCheck className="h-3.5 w-3.5 mr-1" />
-                      Wali
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setEditingStudent(student)}
-                      className="h-8 px-2.5 text-xs text-slate-700 hover:text-emerald-700 hover:border-emerald-300"
-                    >
-                      <Pencil className="h-3.5 w-3.5 mr-1" />
-                      Edit
-                    </Button>
-                    <Button 
-                      variant="destructiveOutline" 
-                      size="sm"
-                      onClick={() => setDeletingId(student.id)}
-                      disabled={deleteMutation.isPending}
-                      className="h-8 px-2.5 text-xs"
-                    >
-                      <Trash2 className="h-3.5 w-3.5 mr-1" />
-                      Hapus
-                    </Button>
-                  </div>
-                </td>
+      <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left text-slate-600">
+            <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
+              <tr>
+                <th scope="col" className="px-5 py-3.5 font-semibold">NIS</th>
+                <th scope="col" className="px-5 py-3.5 font-semibold">Nama Santri</th>
+                <th scope="col" className="px-5 py-3.5 font-semibold">Kelas</th>
+                <th scope="col" className="px-5 py-3.5 font-semibold">Asrama</th>
+                <th scope="col" className="px-5 py-3.5 font-semibold">Wali Santri</th>
+                <th scope="col" className="px-5 py-3.5 font-semibold">Status</th>
+                <th scope="col" className="px-5 py-3.5 font-semibold">Saldo Dompet</th>
+                <th scope="col" className="px-5 py-3.5 font-semibold text-right">Aksi</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white/50">
+              {data.map((student) => (
+                <tr key={student.id} className="hover:bg-slate-50/80 transition-colors">
+                  <td className="px-5 py-3.5 font-semibold text-slate-900">{student.nis}</td>
+                  <td className="px-5 py-3.5 font-medium text-slate-800">{student.name}</td>
+                  <td className="px-5 py-3.5 text-xs text-slate-600">
+                    <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/60 font-medium">
+                      {student.classroom?.name || 'Belum diatur'}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3.5 text-xs">
+                    {student.dormitory ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200/60 font-medium">
+                        {student.dormitory.name}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200/70 font-medium text-[11px]">
+                        Non-Mukim
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3.5 text-xs">
+                    {student.guardians && student.guardians.length > 0 ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/70 font-medium">
+                        <UserCheck className="h-3 w-3 text-emerald-600 shrink-0" />
+                        <span className="truncate max-w-[130px]">{student.guardians[0].username || student.guardians[0].name || 'Wali Santri'}</span>
+                      </span>
+                    ) : (
+                      <span className="text-slate-400 italic">Belum dipetakan</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3.5">{renderStatus(student.status)}</td>
+                  <td className="px-5 py-3.5 font-bold text-slate-900 tabular-nums">
+                    {formatCurrency(student.wallet?.balance || 0)}
+                  </td>
+                  <td className="px-5 py-3.5 text-right">
+                    <div className="inline-flex items-center gap-1.5">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setMappingStudent(student)}
+                        className="h-8 px-2.5 text-xs text-blue-700 bg-blue-50/60 border-blue-200 hover:bg-blue-100"
+                      >
+                        <UserCheck className="h-3.5 w-3.5 mr-1" />
+                        Wali
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setEditingStudent(student)}
+                        className="h-8 px-2.5 text-xs text-slate-700 hover:text-emerald-700 hover:border-emerald-300"
+                      >
+                        <Pencil className="h-3.5 w-3.5 mr-1" />
+                        Edit
+                      </Button>
+                      <Button 
+                        variant="destructiveOutline" 
+                        size="sm"
+                        onClick={() => setDeletingId(student.id)}
+                        disabled={deleteMutation.isPending}
+                        className="h-8 px-2.5 text-xs"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1" />
+                        Hapus
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {pagination && (
+          <DataTablePagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            totalItems={pagination.totalItems}
+            pageSize={pagination.pageSize}
+            onPageChange={pagination.onPageChange}
+            onPageSizeChange={pagination.onPageSizeChange}
+            isLoading={isLoading}
+          />
+        )}
       </div>
       
       <EditStudentModal 

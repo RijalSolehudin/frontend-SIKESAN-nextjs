@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Pencil, Trash2, CalendarDays, CheckCircle2, XCircle } from 'lucide-react';
+import { DataTablePagination } from '@/components/ui/data-table-pagination';
 
 interface AcademicYearTableProps {
   data?: AcademicYear[];
@@ -19,6 +20,8 @@ interface AcademicYearTableProps {
 }
 
 export function AcademicYearTable({ data, isLoading, isError, onRetry }: AcademicYearTableProps) {
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(25);
   const [editingYear, setEditingYear] = useState<AcademicYear | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const deleteMutation = useDeleteAcademicYear();
@@ -66,6 +69,8 @@ export function AcademicYearTable({ data, isLoading, isError, onRetry }: Academi
     });
   };
 
+  const paginatedData = (data || []).slice((page - 1) * perPage, page * perPage);
+
   return (
     <>
       <div className="overflow-hidden rounded-xl border border-slate-200/80 bg-white/60">
@@ -80,7 +85,7 @@ export function AcademicYearTable({ data, isLoading, isError, onRetry }: Academi
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {data.map((year) => (
+            {paginatedData.map((year) => (
               <tr key={year.id} className="hover:bg-emerald-50/30 transition-colors">
                 <td className="px-5 py-3.5 font-mono text-xs text-slate-400">#{year.id}</td>
                 <td className="px-5 py-3.5 font-bold text-slate-900">{year.name}</td>
@@ -135,6 +140,19 @@ export function AcademicYearTable({ data, isLoading, isError, onRetry }: Academi
             ))}
           </tbody>
         </table>
+
+        <DataTablePagination
+          currentPage={page}
+          totalPages={Math.ceil((data?.length || 0) / perPage) || 1}
+          totalItems={data?.length || 0}
+          pageSize={perPage}
+          onPageChange={(newPage) => setPage(newPage)}
+          onPageSizeChange={(newSize) => {
+            setPerPage(newSize);
+            setPage(1);
+          }}
+          isLoading={isLoading}
+        />
       </div>
       
       <EditAcademicYearModal 

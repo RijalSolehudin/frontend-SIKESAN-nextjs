@@ -7,6 +7,7 @@ import { useGetStudentBills } from '../api/useGetStudentBills';
 import { GenerateSppModal } from './GenerateSppModal';
 import { SppPaymentModal } from './SppPaymentModal';
 import { SppReceiptModal } from './SppReceiptModal';
+import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { Student } from '@/features/master-data/types';
 import { 
   Search, 
@@ -53,6 +54,8 @@ export function SppView() {
   const [activeTab, setActiveTab] = useState<'bills' | 'verifications'>('bills');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClassId, setSelectedClassId] = useState<string>('all');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(15);
   const debouncedSearch = useDebounce(searchTerm, 500);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
@@ -72,11 +75,12 @@ export function SppView() {
   // Fetch classes for dropdown filter
   const { data: classes } = useGetClasses();
 
-  // Fetch students for the table with search and class filter
+  // Fetch students for the table with search, class filter, and pagination
   const { data: studentsData, isLoading: isLoadingStudents } = useGetStudents({
     search: debouncedSearch,
     class_id: selectedClassId === 'all' ? undefined : Number(selectedClassId),
-    per_page: 50,
+    page,
+    per_page: perPage,
     status: 'ACTIVE',
   });
 
@@ -103,16 +107,12 @@ export function SppView() {
     ) || student.guardians?.[0];
 
     const rawPhone = primaryGuardian?.phone;
-    if (!rawPhone || !rawPhone.trim()) {
-      toast.error(
-        `Nomor WhatsApp wali santri untuk ${student.name} belum terdaftar di sistem. Silakan lengkapi di menu Manajemen User.`
-      );
-      return;
-    }
-
-    let formattedPhone = rawPhone.replace(/[^0-9]/g, '');
-    if (formattedPhone.startsWith('0')) {
-      formattedPhone = '62' + formattedPhone.slice(1);
+    let formattedPhone = '';
+    if (rawPhone && rawPhone.trim()) {
+      formattedPhone = rawPhone.replace(/[^0-9]/g, '');
+      if (formattedPhone.startsWith('0')) {
+        formattedPhone = '62' + formattedPhone.slice(1);
+      }
     }
 
     const totalUnpaidAmount = unpaidBills.reduce((acc, curr) => acc + curr.amount_billed, 0);
@@ -124,7 +124,7 @@ export function SppView() {
       })
       .join('\n');
 
-    const guardianName = primaryGuardian.name || 'Bapak/Ibu Wali Santri';
+    const guardianName = primaryGuardian?.name || 'Bapak/Ibu Wali Santri';
 
     const message = 
 `Assalamu'alaikum Warahmatullahi Wabarakatuh.
@@ -269,13 +269,22 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
                     placeholder="Cari nama atau NIS santri..."
                     className="pl-9 h-10 rounded-xl bg-white border-slate-200 text-sm focus:border-emerald-600"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      setPage(1);
+                    }}
                   />
                 </div>
 
                 {/* Class Filter Dropdown */}
                 <div className="w-full sm:w-52">
-                  <Select value={selectedClassId} onValueChange={setSelectedClassId}>
+                  <Select 
+                    value={selectedClassId} 
+                    onValueChange={(val) => {
+                      setSelectedClassId(val);
+                      setPage(1);
+                    }}
+                  >
                     <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 text-xs">
                       <div className="flex items-center gap-2 truncate">
                         <School className="h-4 w-4 text-emerald-600 shrink-0" />
@@ -300,8 +309,9 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
             </div>
 
             {/* SPP Bills Table */}
-            <div className="overflow-x-auto rounded-xl border border-slate-200/80 bg-white/60">
-              <table className="w-full text-sm text-left text-slate-600">
+            <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left text-slate-600">
                 <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
                   <tr>
                     <th scope="col" className="px-5 py-3.5 font-semibold">NIS</th>
@@ -499,9 +509,23 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
                 </tbody>
               </table>
             </div>
+
+            <DataTablePagination
+              currentPage={studentsData?.current_page || page}
+              totalPages={studentsData?.last_page || 1}
+              totalItems={studentsData?.total || 0}
+              pageSize={studentsData?.per_page || perPage}
+              onPageChange={(newPage) => setPage(newPage)}
+              onPageSizeChange={(newSize) => {
+                setPerPage(newSize);
+                setPage(1);
+              }}
+              isLoading={isLoadingStudents}
+            />
           </div>
-        </>
-      )}
+        </div>
+      </>
+    )}
 
       <SppPaymentModal 
         student={selectedStudent} 

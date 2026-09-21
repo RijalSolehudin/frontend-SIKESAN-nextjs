@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { RecordInfaqModal } from './RecordInfaqModal';
 import { useGetLedger } from '../api/useGetLedger';
 import { useGetTreasurerMetrics } from '@/features/dashboard/api/useGetTreasurerMetrics';
@@ -7,12 +8,16 @@ import { HeartHandshake, ArrowUpRight, CheckCircle2, History } from 'lucide-reac
 import { MetricCard } from '@/features/dashboard/components/MetricCard';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
+import { DataTablePagination } from '@/components/ui/data-table-pagination';
 
 export function InfaqView() {
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(15);
   const { data: metrics, isLoading: isLoadingMetrics } = useGetTreasurerMetrics();
-  const { data: ledgerData, isLoading: isLoadingLedger, isError, refetch } = useGetLedger({ per_page: 50 });
+  const { data: ledgerData, isLoading: isLoadingLedger, isError, refetch } = useGetLedger({ per_page: 100 });
 
   const infaqTransactions = ledgerData?.data.filter((trx: any) => trx.type === 'INFAQ') || [];
+  const paginatedTransactions = infaqTransactions.slice((page - 1) * perPage, page * perPage);
 
   const formatCurrency = (amount: number = 0) => {
     return new Intl.NumberFormat('id-ID', {
@@ -103,41 +108,56 @@ export function InfaqView() {
             description="Belum ada penerimaan infaq yang tercatat pada buku besar. Klik tombol Catat Infaq untuk menambahkan donasi baru."
           />
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-slate-200/80 bg-white/60">
-            <table className="w-full text-sm text-left text-slate-600">
-              <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
-                <tr>
-                  <th scope="col" className="px-5 py-3.5 font-semibold">Tanggal</th>
-                  <th scope="col" className="px-5 py-3.5 font-semibold">Keterangan / Donatur</th>
-                  <th scope="col" className="px-5 py-3.5 font-semibold">Kategori</th>
-                  <th scope="col" className="px-5 py-3.5 font-semibold text-right">Nominal Donasi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {infaqTransactions.map((trx: any, index: number) => (
-                  <tr key={index} className="hover:bg-emerald-50/30 transition-colors">
-                    <td className="px-5 py-3.5 text-xs text-slate-500">
-                      {new Date(trx.date).toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </td>
-                    <td className="px-5 py-3.5 font-bold text-slate-900">
-                      {trx.description}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200/80">
-                        Infaq / Sedekah
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-right font-extrabold text-emerald-700 tabular-nums">
-                      {formatCurrency(trx.amount)}
-                    </td>
+          <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-slate-600">
+                <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
+                  <tr>
+                    <th scope="col" className="px-5 py-3.5 font-semibold">Tanggal</th>
+                    <th scope="col" className="px-5 py-3.5 font-semibold">Keterangan / Donatur</th>
+                    <th scope="col" className="px-5 py-3.5 font-semibold">Kategori</th>
+                    <th scope="col" className="px-5 py-3.5 font-semibold text-right">Nominal Donasi</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {paginatedTransactions.map((trx: any, index: number) => (
+                    <tr key={index} className="hover:bg-emerald-50/30 transition-colors">
+                      <td className="px-5 py-3.5 text-xs text-slate-500">
+                        {new Date(trx.date).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </td>
+                      <td className="px-5 py-3.5 font-bold text-slate-900">
+                        {trx.description}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200/80">
+                          Infaq / Sedekah
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-right font-extrabold text-emerald-700 tabular-nums">
+                        {formatCurrency(trx.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <DataTablePagination
+              currentPage={page}
+              totalPages={Math.ceil(infaqTransactions.length / perPage) || 1}
+              totalItems={infaqTransactions.length}
+              pageSize={perPage}
+              onPageChange={(newPage) => setPage(newPage)}
+              onPageSizeChange={(newSize) => {
+                setPerPage(newSize);
+                setPage(1);
+              }}
+              isLoading={isLoadingLedger}
+            />
           </div>
         )}
       </div>

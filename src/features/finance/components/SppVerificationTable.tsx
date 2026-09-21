@@ -6,6 +6,7 @@ import { useApproveSppVerification } from '../api/useApproveSppVerification';
 import { SppPaymentVerification } from '../types';
 import { ProofPreviewModal } from './ProofPreviewModal';
 import { RejectVerificationModal } from './RejectVerificationModal';
+import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { 
   Check, 
   X, 
@@ -33,6 +34,8 @@ interface SppVerificationTableProps {
 export function SppVerificationTable({ onOpenReceipt }: SppVerificationTableProps = {}) {
   const [statusFilter, setStatusFilter] = useState<'PENDING' | 'APPROVED' | 'REJECTED' | 'all'>('PENDING');
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(15);
   const debouncedSearch = useDebounce(searchTerm, 400);
 
   const [previewPayment, setPreviewPayment] = useState<SppPaymentVerification | null>(null);
@@ -44,7 +47,8 @@ export function SppVerificationTable({ onOpenReceipt }: SppVerificationTableProp
   const { data, isLoading } = useGetSppVerifications({
     status: statusFilter,
     search: debouncedSearch,
-    per_page: 30,
+    page,
+    per_page: perPage,
   });
 
   const approveMutation = useApproveSppVerification();
@@ -81,7 +85,10 @@ export function SppVerificationTable({ onOpenReceipt }: SppVerificationTableProp
         <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200/60 overflow-x-auto max-w-full">
           <button
             type="button"
-            onClick={() => setStatusFilter('PENDING')}
+            onClick={() => {
+              setStatusFilter('PENDING');
+              setPage(1);
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap ${
               statusFilter === 'PENDING'
                 ? 'bg-white text-amber-700 shadow-xs border border-slate-200/80 font-bold'
@@ -98,7 +105,10 @@ export function SppVerificationTable({ onOpenReceipt }: SppVerificationTableProp
           </button>
           <button
             type="button"
-            onClick={() => setStatusFilter('APPROVED')}
+            onClick={() => {
+              setStatusFilter('APPROVED');
+              setPage(1);
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
               statusFilter === 'APPROVED'
                 ? 'bg-white text-emerald-700 shadow-xs border border-slate-200/80 font-bold'
@@ -109,7 +119,10 @@ export function SppVerificationTable({ onOpenReceipt }: SppVerificationTableProp
           </button>
           <button
             type="button"
-            onClick={() => setStatusFilter('REJECTED')}
+            onClick={() => {
+              setStatusFilter('REJECTED');
+              setPage(1);
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
               statusFilter === 'REJECTED'
                 ? 'bg-white text-rose-700 shadow-xs border border-slate-200/80 font-bold'
@@ -120,7 +133,10 @@ export function SppVerificationTable({ onOpenReceipt }: SppVerificationTableProp
           </button>
           <button
             type="button"
-            onClick={() => setStatusFilter('all')}
+            onClick={() => {
+              setStatusFilter('all');
+              setPage(1);
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
               statusFilter === 'all'
                 ? 'bg-white text-slate-900 shadow-xs border border-slate-200/80 font-bold'
@@ -139,14 +155,18 @@ export function SppVerificationTable({ onOpenReceipt }: SppVerificationTableProp
             placeholder="Cari santri, wali, pengirim..."
             className="pl-9 h-9 rounded-xl text-xs bg-white"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1);
+            }}
           />
         </div>
       </div>
 
       {/* Table Container */}
-      <div className="overflow-x-auto rounded-xl border border-slate-200/80 bg-white/60">
-        <table className="w-full text-sm text-left text-slate-600">
+      <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left text-slate-600">
           <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
             <tr>
               <th scope="col" className="px-5 py-3.5 font-semibold">Tgl Pengajuan</th>
@@ -340,6 +360,20 @@ export function SppVerificationTable({ onOpenReceipt }: SppVerificationTableProp
           </tbody>
         </table>
       </div>
+
+      <DataTablePagination
+        currentPage={data?.data?.current_page || page}
+        totalPages={data?.data?.last_page || 1}
+        totalItems={data?.data?.total || 0}
+        pageSize={data?.data?.per_page || perPage}
+        onPageChange={(newPage) => setPage(newPage)}
+        onPageSizeChange={(newSize) => {
+          setPerPage(newSize);
+          setPage(1);
+        }}
+        isLoading={isLoading}
+      />
+    </div>
 
       {/* Modals */}
       <ProofPreviewModal

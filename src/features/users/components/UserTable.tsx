@@ -21,14 +21,24 @@ import {
   ShieldCheck 
 } from 'lucide-react';
 
+import { DataTablePagination } from '@/components/ui/data-table-pagination';
+
 interface UserTableProps {
   data?: User[];
   isLoading: boolean;
   isError: boolean;
   onRetry?: () => void;
+  pagination?: {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    pageSize: number;
+    onPageChange: (page: number) => void;
+    onPageSizeChange?: (pageSize: number) => void;
+  };
 }
 
-export function UserTable({ data, isLoading, isError, onRetry }: UserTableProps) {
+export function UserTable({ data, isLoading, isError, onRetry, pagination }: UserTableProps) {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const deleteMutation = useDeleteUser();
@@ -142,8 +152,9 @@ export function UserTable({ data, isLoading, isError, onRetry }: UserTableProps)
 
   return (
     <>
-      <div className="overflow-x-auto rounded-xl border border-slate-200/80 bg-white/60">
-        <table className="w-full text-sm text-left text-slate-600">
+      <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left text-slate-600">
           <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
             <tr>
               <th scope="col" className="px-5 py-3.5 font-semibold">Pengguna</th>
@@ -257,6 +268,19 @@ export function UserTable({ data, isLoading, isError, onRetry }: UserTableProps)
           </tbody>
         </table>
       </div>
+
+      {pagination && (
+        <DataTablePagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          pageSize={pagination.pageSize}
+          onPageChange={pagination.onPageChange}
+          onPageSizeChange={pagination.onPageSizeChange}
+          isLoading={isLoading}
+        />
+      )}
+    </div>
 
       <EditUserModal
         user={editingUser}

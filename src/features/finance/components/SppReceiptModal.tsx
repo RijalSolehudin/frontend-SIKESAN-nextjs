@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { useGetSppReceipt } from '../api/useGetSppReceipt';
 import { printSppReceipt, numberToWordsIndonesian } from '../utils/printReceipt';
 import { Printer, MessageSquare, CheckCircle2, Building2, Calendar, ShieldCheck } from 'lucide-react';
-import { toast } from 'sonner';
 
 interface SppReceiptModalProps {
   paymentId: string | null;
@@ -40,12 +39,6 @@ export function SppReceiptModal({ paymentId, isOpen, onClose }: SppReceiptModalP
     if (!receipt) return;
 
     const guardianPhone = receipt.guardian?.phone || '';
-    if (!guardianPhone) {
-      toast.error('Nomor WhatsApp wali santri tidak tersedia di data santri.');
-      return;
-    }
-
-    // Clean phone number (e.g. 0812... -> 62812...)
     let cleanPhone = guardianPhone.replace(/[^0-9]/g, '');
     if (cleanPhone.startsWith('0')) {
       cleanPhone = '62' + cleanPhone.slice(1);
@@ -87,7 +80,9 @@ _Alhamdulillah, pembayaran telah diverifikasi dan sah tercatat di sistem perbend
 Terima kasih atas kerja samanya.
 *Pengurus Keuangan / Bendahara SIKESAN*`;
 
-    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    const waUrl = cleanPhone
+      ? `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`
+      : `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(waUrl, '_blank');
   };
 

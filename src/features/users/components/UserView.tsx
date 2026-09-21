@@ -18,12 +18,15 @@ import { Input } from '@/components/ui/input';
 export function UserView() {
   const [selectedRole, setSelectedRole] = useState<string>('all');
   const [search, setSearch] = useState<string>('');
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(15);
 
   const { data: allUsersData, isLoading: isLoadingAll } = useGetUsers({ per_page: 100 });
   const { data: filteredData, isLoading, isError, refetch } = useGetUsers({
     role: selectedRole === 'all' ? undefined : selectedRole,
     search: search ? search : undefined,
-    per_page: 50,
+    page,
+    per_page: perPage,
   });
 
   const allUsers = allUsersData?.data || [];
@@ -110,7 +113,10 @@ export function UserView() {
                 <button
                   key={rf.value}
                   type="button"
-                  onClick={() => setSelectedRole(rf.value)}
+                  onClick={() => {
+                    setSelectedRole(rf.value);
+                    setPage(1);
+                  }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                     isSelected
                       ? 'bg-white text-slate-900 shadow-2xs'
@@ -129,13 +135,19 @@ export function UserView() {
             <Input
               placeholder="Cari nama, username, no. HP..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               className="pl-9 pr-8 h-9 text-xs rounded-xl bg-white"
             />
             {search && (
               <button
                 type="button"
-                onClick={() => setSearch('')}
+                onClick={() => {
+                  setSearch('');
+                  setPage(1);
+                }}
                 className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
               >
                 <X className="h-4 w-4" />
@@ -149,15 +161,18 @@ export function UserView() {
           isLoading={isLoading}
           isError={isError}
           onRetry={() => refetch()}
+          pagination={filteredData?.meta ? {
+            currentPage: filteredData.meta.current_page || page,
+            totalPages: filteredData.meta.last_page || 1,
+            totalItems: filteredData.meta.total || 0,
+            pageSize: filteredData.meta.per_page || perPage,
+            onPageChange: (newPage) => setPage(newPage),
+            onPageSizeChange: (newSize) => {
+              setPerPage(newSize);
+              setPage(1);
+            },
+          } : undefined}
         />
-
-        {filteredData?.meta && filteredData.meta.total > 0 && (
-          <div className="flex justify-end pt-2">
-            <p className="text-xs text-slate-400">
-              Menampilkan {filteredData.data.length} dari total {filteredData.meta.total} pengguna
-            </p>
-          </div>
-        )}
       </div>
     </div>
   );

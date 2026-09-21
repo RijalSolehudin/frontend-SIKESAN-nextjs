@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useGetTopUps } from '../api/useGetTopUps';
 import { TopUpTable } from './TopUpTable';
 import { CreateTopUpModal } from './CreateTopUpModal';
@@ -7,7 +8,12 @@ import { ArrowDownToLine, Clock, CheckCircle2 } from 'lucide-react';
 import { MetricCard } from '@/features/dashboard/components/MetricCard';
 
 export function TopUpView() {
-  const { data, isLoading, isError, refetch } = useGetTopUps({ per_page: 50 });
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(15);
+  const { data, isLoading, isError, refetch } = useGetTopUps({
+    page,
+    per_page: perPage,
+  });
 
   const topUps = data?.data || [];
   const pendingCount = topUps.filter((t) => t.status === 'PENDING').length;
@@ -83,15 +89,23 @@ export function TopUpView() {
           </div>
         </div>
 
-        <TopUpTable data={topUps} isLoading={isLoading} isError={isError} onRetry={() => refetch()} />
-        
-        {data && data.last_page > 1 && (
-          <div className="flex justify-end pt-2">
-            <p className="text-xs text-slate-400">
-              Menampilkan {data.data.length} dari total {data.total} permintaan
-            </p>
-          </div>
-        )}
+        <TopUpTable 
+          data={topUps} 
+          isLoading={isLoading} 
+          isError={isError} 
+          onRetry={() => refetch()} 
+          pagination={data ? {
+            currentPage: data.current_page || page,
+            totalPages: data.last_page || 1,
+            totalItems: data.total || 0,
+            pageSize: data.per_page || perPage,
+            onPageChange: (newPage) => setPage(newPage),
+            onPageSizeChange: (newSize) => {
+              setPerPage(newSize);
+              setPage(1);
+            },
+          } : undefined}
+        />
       </div>
     </div>
   );

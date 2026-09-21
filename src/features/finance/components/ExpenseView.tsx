@@ -1,17 +1,22 @@
 'use client';
 
+import { useState } from 'react';
 import { RecordExpenseModal } from './RecordExpenseModal';
 import { useGetLedger } from '../api/useGetLedger';
 import { ArrowUpFromLine, Receipt, AlertCircle, History } from 'lucide-react';
 import { MetricCard } from '@/features/dashboard/components/MetricCard';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ErrorState } from '@/components/ui/error-state';
+import { DataTablePagination } from '@/components/ui/data-table-pagination';
 
 export function ExpenseView() {
-  const { data: ledgerData, isLoading, isError, refetch } = useGetLedger({ per_page: 50 });
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(15);
+  const { data: ledgerData, isLoading, isError, refetch } = useGetLedger({ per_page: 100 });
 
   const expenseTransactions = ledgerData?.data.filter((trx: any) => trx.type === 'EXPENSE' || trx.description?.toLowerCase().includes('pengeluaran')) || [];
   const totalExpense = expenseTransactions.reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0);
+  const paginatedTransactions = expenseTransactions.slice((page - 1) * perPage, page * perPage);
 
   const formatCurrency = (amount: number = 0) => {
     return new Intl.NumberFormat('id-ID', {
@@ -102,41 +107,56 @@ export function ExpenseView() {
             description="Belum ada transaksi pengeluaran pada periode ini. Klik tombol Catat Pengeluaran untuk menambahkan."
           />
         ) : (
-          <div className="overflow-x-auto rounded-xl border border-slate-200/80 bg-white/60">
-            <table className="w-full text-sm text-left text-slate-600">
-              <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
-                <tr>
-                  <th scope="col" className="px-5 py-3.5 font-semibold">Tanggal</th>
-                  <th scope="col" className="px-5 py-3.5 font-semibold">Keterangan Pengeluaran</th>
-                  <th scope="col" className="px-5 py-3.5 font-semibold">Tipe Akun</th>
-                  <th scope="col" className="px-5 py-3.5 font-semibold text-right">Nominal Beban</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {expenseTransactions.map((trx: any, index: number) => (
-                  <tr key={index} className="hover:bg-rose-50/30 transition-colors">
-                    <td className="px-5 py-3.5 text-xs text-slate-500">
-                      {new Date(trx.date).toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                      })}
-                    </td>
-                    <td className="px-5 py-3.5 font-bold text-slate-900">
-                      {trx.description}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200/80">
-                        Beban Operasional
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-right font-extrabold text-rose-600 tabular-nums">
-                      - {formatCurrency(trx.amount)}
-                    </td>
+          <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left text-slate-600">
+                <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
+                  <tr>
+                    <th scope="col" className="px-5 py-3.5 font-semibold">Tanggal</th>
+                    <th scope="col" className="px-5 py-3.5 font-semibold">Keterangan Pengeluaran</th>
+                    <th scope="col" className="px-5 py-3.5 font-semibold">Tipe Akun</th>
+                    <th scope="col" className="px-5 py-3.5 font-semibold text-right">Nominal Beban</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {paginatedTransactions.map((trx: any, index: number) => (
+                    <tr key={index} className="hover:bg-rose-50/30 transition-colors">
+                      <td className="px-5 py-3.5 text-xs text-slate-500">
+                        {new Date(trx.date).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </td>
+                      <td className="px-5 py-3.5 font-bold text-slate-900">
+                        {trx.description}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200/80">
+                          Beban Operasional
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-right font-extrabold text-rose-600 tabular-nums">
+                        - {formatCurrency(trx.amount)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <DataTablePagination
+              currentPage={page}
+              totalPages={Math.ceil(expenseTransactions.length / perPage) || 1}
+              totalItems={expenseTransactions.length}
+              pageSize={perPage}
+              onPageChange={(newPage) => setPage(newPage)}
+              onPageSizeChange={(newSize) => {
+                setPerPage(newSize);
+                setPage(1);
+              }}
+              isLoading={isLoading}
+            />
           </div>
         )}
       </div>
