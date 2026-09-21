@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useGetSppReceipt } from '../api/useGetSppReceipt';
+import { printSppReceipt, numberToWordsIndonesian } from '../utils/printReceipt';
 import { Printer, MessageSquare, CheckCircle2, Building2, Calendar, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -16,23 +17,6 @@ interface SppReceiptModalProps {
   paymentId: string | null;
   isOpen: boolean;
   onClose: () => void;
-}
-
-function numberToWordsIndonesian(num: number): string {
-  const units = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'];
-  
-  if (num === 0) return 'Nol';
-  if (num < 12) return units[num];
-  if (num < 20) return numberToWordsIndonesian(num - 10) + ' Belas';
-  if (num < 100) return numberToWordsIndonesian(Math.floor(num / 10)) + ' Puluh' + (num % 10 !== 0 ? ' ' + numberToWordsIndonesian(num % 10) : '');
-  if (num < 200) return 'Seratus' + (num % 100 !== 0 ? ' ' + numberToWordsIndonesian(num % 100) : '');
-  if (num < 1000) return numberToWordsIndonesian(Math.floor(num / 100)) + ' Ratus' + (num % 100 !== 0 ? ' ' + numberToWordsIndonesian(num % 100) : '');
-  if (num < 2000) return 'Seribu' + (num % 1000 !== 0 ? ' ' + numberToWordsIndonesian(num % 1000) : '');
-  if (num < 1000000) return numberToWordsIndonesian(Math.floor(num / 1000)) + ' Ribu' + (num % 1000 !== 0 ? ' ' + numberToWordsIndonesian(num % 1000) : '');
-  if (num < 1000000000) return numberToWordsIndonesian(Math.floor(num / 1000000)) + ' Juta' + (num % 1000000 !== 0 ? ' ' + numberToWordsIndonesian(num % 1000000) : '');
-  if (num < 1000000000000) return numberToWordsIndonesian(Math.floor(num / 1000000000)) + ' Miliar' + (num % 1000000000 !== 0 ? ' ' + numberToWordsIndonesian(num % 1000000000) : '');
-  
-  return num.toString();
 }
 
 export function SppReceiptModal({ paymentId, isOpen, onClose }: SppReceiptModalProps) {
@@ -48,7 +32,8 @@ export function SppReceiptModal({ paymentId, isOpen, onClose }: SppReceiptModalP
   };
 
   const handlePrint = () => {
-    window.print();
+    if (!receipt) return;
+    printSppReceipt(receipt);
   };
 
   const handleSendWhatsApp = () => {
@@ -143,7 +128,7 @@ Terima kasih atas kerja samanya.
               </div>
 
               {/* Header Lembaga / Pesantren */}
-              <div className="border-b-2 border-slate-800/80 pb-4 text-center space-y-1">
+              <div className="border-b-4 border-double border-slate-900 pb-3 text-center space-y-1">
                 <div className="flex items-center justify-center gap-2 text-emerald-700 font-extrabold text-lg sm:text-xl tracking-tight uppercase">
                   <Building2 className="h-5 w-5" />
                   <span>{receipt.institution.name}</span>
