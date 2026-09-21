@@ -132,4 +132,41 @@ test.describe('Alur Finansial Utama SIKESAN', () => {
     await proofModal.getByRole('button', { name: /tutup/i }).click();
     await expect(proofModal).not.toBeVisible();
   });
+
+  test('Bendahara dapat mencari santri secara spesifik menggunakan fitur search pada modal Top Up', async ({ page }) => {
+    // 1. Login Petugas / Super Admin
+    await page.goto('/login');
+    await page.getByLabel('Username').fill('superadmin');
+    await page.getByLabel('Password').fill('password');
+    await page.getByRole('button', { name: /masuk ke dasbor|login/i }).click();
+    await expect(page.getByRole('heading', { name: /dashboard bendahara/i })).toBeVisible({ timeout: 10000 });
+
+    // 2. Buka Halaman Top Up & Modal
+    await page.goto('/finance/top-up');
+    await page.getByRole('button', { name: /buat permintaan top-up/i }).click();
+    const modal = page.getByRole('dialog');
+    await expect(modal).toBeVisible();
+
+    // 3. Klik Combobox Santri untuk membuka popup pencarian
+    const comboboxBtn = modal.locator('button[role="combobox"]').first();
+    await comboboxBtn.click();
+
+    // 4. Input Pencarian Santri
+    const searchInput = modal.getByPlaceholder(/ketik nama atau nis santri/i);
+    await expect(searchInput).toBeVisible();
+    await searchInput.fill('Santri');
+
+    // 5. Pilih salah satu santri hasil pencarian
+    const firstOption = modal.getByRole('option').first();
+    await expect(firstOption).toBeVisible({ timeout: 5000 });
+    const studentText = await firstOption.textContent();
+    await firstOption.click();
+
+    // 6. Verifikasi santri terpilih ditampilkan pada tombol combobox
+    await expect(comboboxBtn).not.toHaveText(/cari nama atau nis santri/i);
+
+    // 7. Batalkan modal
+    await modal.getByRole('button', { name: 'Batal', exact: true }).click();
+    await expect(modal).not.toBeVisible();
+  });
 });

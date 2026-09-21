@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCreateTopUp } from '../api/useCreateTopUp';
-import { useGetStudents } from '@/features/master-data/api/useGetStudents';
+import { StudentSearchCombobox } from './StudentSearchCombobox';
 
 const formSchema = z.object({
   student_id: z.string().min(1, 'Santri wajib dipilih'),
@@ -52,7 +52,6 @@ export function CreateTopUpModal() {
   const [inputKey, setInputKey] = useState(0);
 
   const createMutation = useCreateTopUp();
-  const { data: studentsData } = useGetStudents({ per_page: 100 });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -151,23 +150,16 @@ export function CreateTopUpModal() {
             <FormField
               control={form.control}
               name="student_id"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <FormItem>
                   <FormLabel className="text-xs font-semibold text-slate-700">Pilih Santri</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-10 rounded-xl">
-                        <SelectValue placeholder="Pilih Santri" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="max-h-[220px]">
-                      {studentsData?.data.map((student) => (
-                        <SelectItem key={student.id} value={student.id.toString()}>
-                          {student.name} ({student.nis})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <StudentSearchCombobox
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      error={!!fieldState.error}
+                    />
+                  </FormControl>
                   <FormMessage className="text-xs" />
                 </FormItem>
               )}
