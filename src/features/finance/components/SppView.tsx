@@ -100,9 +100,9 @@ export function SppView() {
   ).length;
 
   const handleSendWaReminder = (student: Student) => {
-    const unpaidBills = student.bills?.filter(
+    const unpaidBills = (student.bills?.filter(
       (b) => b.status === 'UNPAID' || b.status === 'PARTIAL'
-    ) || [];
+    ) || []).sort((a, b) => a.period_year - b.period_year || a.period_month - b.period_month);
 
     if (unpaidBills.length === 0) {
       toast.info('Santri ini tidak memiliki tagihan tertunggak.');
@@ -358,9 +358,9 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
                       </tr>
                     ) : (
                       studentsList.map((student) => {
-                        const unpaidBills = student.bills?.filter(
+                        const unpaidBills = (student.bills?.filter(
                           (b) => b.status === 'UNPAID' || b.status === 'PARTIAL'
-                        ) || [];
+                        ) || []).sort((a, b) => a.period_year - b.period_year || a.period_month - b.period_month);
                         const pendingBills = student.bills?.filter(
                           (b) => b.status === 'PENDING'
                         ) || [];

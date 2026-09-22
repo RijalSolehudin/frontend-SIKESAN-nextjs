@@ -104,7 +104,7 @@ export function GenerateSppModal() {
             Pilih periode bulan dan tahun ajaran untuk membuat tagihan SPP bagi seluruh santri berstatus aktif.
           </DialogDescription>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
             <div className="grid grid-cols-2 gap-4">
@@ -130,7 +130,7 @@ export function GenerateSppModal() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="period_year"
@@ -156,21 +156,21 @@ export function GenerateSppModal() {
             </div>
 
             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 leading-relaxed">
-              Tagihan yang sudah terbit pada periode yang sama tidak akan terduplikasi (*idempotent*).
+              Tagihan yang sudah terbit pada periode yang sama tidak akan terduplikasi.
             </div>
 
             <DialogFooter className="mt-6 pt-3 border-t border-slate-100 flex flex-row justify-end gap-2">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setOpen(false)}
                 disabled={generateMutation.isPending}
                 className="rounded-lg"
               >
                 Batal
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={generateMutation.isPending}
                 className="rounded-lg font-semibold"
               >
