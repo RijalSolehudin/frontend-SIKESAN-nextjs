@@ -79,6 +79,7 @@ export function ClassroomTable({ data, isLoading, isError, onRetry }: ClassroomT
             <tr>
               <th scope="col" className="px-5 py-3.5 font-semibold">ID</th>
               <th scope="col" className="px-5 py-3.5 font-semibold">Nama Kelas</th>
+              <th scope="col" className="px-5 py-3.5 font-semibold">Jenjang</th>
               <th scope="col" className="px-5 py-3.5 font-semibold">Tanggal Dibuat</th>
               <th scope="col" className="px-5 py-3.5 font-semibold text-right">Aksi</th>
             </tr>
@@ -88,6 +89,15 @@ export function ClassroomTable({ data, isLoading, isError, onRetry }: ClassroomT
               <tr key={cls.id} className="hover:bg-emerald-50/30 transition-colors">
                 <td className="px-5 py-3.5 font-mono text-xs text-slate-400">#{cls.id}</td>
                 <td className="px-5 py-3.5 font-bold text-slate-900">{cls.name}</td>
+                <td className="px-5 py-3.5">
+                  {cls.education_level ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
+                      {cls.education_level}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">-</span>
+                  )}
+                </td>
                 <td className="px-5 py-3.5 text-xs text-slate-500">
                   {new Date(cls.created_at).toLocaleDateString('id-ID', {
                     day: 'numeric',

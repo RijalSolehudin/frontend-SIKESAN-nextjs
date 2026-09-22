@@ -4,6 +4,7 @@ import { Classroom } from '../types';
 
 export interface CreateClassRequest {
   name: string;
+  education_level?: 'SD' | 'SMP' | 'SMA' | null;
 }
 
 export const useCreateClass = () => {

@@ -1,4 +1,5 @@
 import { SppReceiptData } from '../types';
+import { AnnualFeeReceiptData } from '../types/annual-fees';
 
 export function numberToWordsIndonesian(num: number): string {
   const units = ['', 'Satu', 'Dua', 'Tiga', 'Empat', 'Lima', 'Enam', 'Tujuh', 'Delapan', 'Sembilan', 'Sepuluh', 'Sebelas'];
@@ -376,3 +377,262 @@ export function printSppReceipt(receipt: SppReceiptData) {
     }, 2000);
   }, 250);
 }
+
+export function printAnnualFeeReceipt(receipt: AnnualFeeReceiptData) {
+  const printFrame = document.createElement('iframe');
+  printFrame.setAttribute('style', 'position: fixed; top: -9999px; left: -9999px; width: 1px; height: 1px; border: 0; opacity: 0;');
+  document.body.appendChild(printFrame);
+
+  const doc = printFrame.contentWindow?.document;
+  if (!doc) return;
+
+  const formattedDate = new Date(receipt.payment.payment_date).toLocaleDateString('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  const formatRupiah = (val: number) => {
+    return 'Rp ' + val.toLocaleString('id-ID');
+  };
+
+  const isLunas = receipt.remaining_balance <= 0;
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="id">
+    <head>
+      <meta charset="utf-8">
+      <title>Kwitansi Biaya Tahunan - ${receipt.payment.id}</title>
+      <style>
+        @page {
+          size: A4 portrait;
+          margin: 10mm 15mm;
+        }
+        * {
+          box-sizing: border-box;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          margin: 0;
+          padding: 0;
+          color: #0f172a;
+          background: #fff;
+          font-size: 11px;
+          line-height: 1.4;
+        }
+        .receipt-card {
+          width: 100%;
+          max-width: 780px;
+          margin: 0 auto;
+          border: 1.5px solid #047857;
+          border-radius: 8px;
+          padding: 20px 24px;
+        }
+        .header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          border-bottom: 2px solid #047857;
+          padding-bottom: 12px;
+          margin-bottom: 16px;
+        }
+        .inst-title {
+          font-size: 16px;
+          font-weight: 800;
+          color: #065f46;
+          text-transform: uppercase;
+        }
+        .inst-sub {
+          font-size: 10px;
+          color: #475569;
+        }
+        .receipt-title-box {
+          text-align: right;
+        }
+        .receipt-title {
+          font-size: 16px;
+          font-weight: 800;
+          color: #047857;
+          letter-spacing: 0.5px;
+        }
+        .info-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+          margin-bottom: 16px;
+          background: #f8fafc;
+          padding: 10px 14px;
+          border-radius: 6px;
+          border: 1px solid #e2e8f0;
+        }
+        .info-row {
+          display: flex;
+          margin-bottom: 4px;
+        }
+        .info-label {
+          width: 120px;
+          font-size: 10.5px;
+          color: #64748b;
+          font-weight: 500;
+        }
+        .info-val {
+          font-size: 11px;
+          font-weight: 600;
+          color: #0f172a;
+        }
+        .table-data {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 16px;
+        }
+        .table-data th {
+          background: #065f46;
+          color: #fff;
+          font-size: 10.5px;
+          padding: 7px 10px;
+          text-transform: uppercase;
+        }
+        .table-data td {
+          padding: 8px 10px;
+          border-bottom: 1px solid #e2e8f0;
+        }
+        .terbilang-box {
+          background: #f0fdf4;
+          border: 1px dashed #10b981;
+          border-radius: 6px;
+          padding: 8px 12px;
+          margin-bottom: 18px;
+        }
+        .terbilang-text {
+          font-weight: 700;
+          color: #065f46;
+          font-style: italic;
+        }
+        .footer-grid {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          margin-top: 20px;
+        }
+        .stamp-lunas {
+          display: inline-block;
+          border: 2px solid ${isLunas ? '#047857' : '#d97706'};
+          color: ${isLunas ? '#047857' : '#d97706'};
+          padding: 4px 12px;
+          border-radius: 4px;
+          font-weight: 800;
+          font-size: 13px;
+          margin-bottom: 8px;
+          transform: rotate(-3deg);
+        }
+        .signature-line {
+          margin-top: 45px;
+          border-top: 1px solid #0f172a;
+          padding-top: 3px;
+          font-weight: 700;
+          text-align: center;
+          width: 160px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="receipt-card">
+        <div class="header">
+          <div>
+            <div class="inst-title">PESANTREN SIKESAN</div>
+            <div class="inst-sub">Sistem Informasi Keuangan Santri Terintegrasi</div>
+          </div>
+          <div class="receipt-title-box">
+            <div class="receipt-title">KWITANSI PEMBAYARAN</div>
+            <div style="font-size: 9.5px; color: #64748b;">No: KWT-BT-${receipt.payment.id.slice(0, 10).toUpperCase()}</div>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div>
+            <div class="info-row"><span class="info-label">Nama Santri:</span><span class="info-val">${receipt.student?.name || '-'}</span></div>
+            <div class="info-row"><span class="info-label">NIS:</span><span class="info-val">${receipt.student?.nis || '-'}</span></div>
+            <div class="info-row"><span class="info-label">Kelas / Jenjang:</span><span class="info-val">${receipt.student?.classroom?.name || '-'} (${receipt.student?.classroom?.education_level || '-'})</span></div>
+          </div>
+          <div>
+            <div class="info-row"><span class="info-label">Tahun Ajaran:</span><span class="info-val">${receipt.bill?.academic_year?.name || '-'}</span></div>
+            <div class="info-row"><span class="info-label">Tanggal Bayar:</span><span class="info-val">${formattedDate}</span></div>
+            <div class="info-row"><span class="info-label">Metode:</span><span class="info-val">${receipt.payment.payment_method}</span></div>
+          </div>
+        </div>
+
+        <table class="table-data">
+          <thead>
+            <tr>
+              <th style="width: 35px; text-align: center;">No.</th>
+              <th style="text-align: left;">Keterangan Pembayaran</th>
+              <th style="width: 140px; text-align: center;">Kategori Santri</th>
+              <th style="width: 140px; text-align: right;">Jumlah Dibayar</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="text-align: center;">1</td>
+              <td>
+                <strong>Cicilan Biaya Tahunan (Uang Pangkal) Ke-${receipt.installment_number}</strong>
+                ${receipt.payment.notes ? `<div style="font-size: 10px; color: #64748b;">Catatan: ${receipt.payment.notes}</div>` : ''}
+              </td>
+              <td style="text-align: center;">${receipt.bill.student_type === 'NEW' ? 'Santri Baru (Tahun ke-1)' : 'Santri Lama (Lanjutan)'}</td>
+              <td style="text-align: right; font-weight: 700; color: #047857;">${formatRupiah(receipt.payment.amount)}</td>
+            </tr>
+            <tr style="background: #f8fafc; font-weight: 600;">
+              <td colspan="3" style="text-align: right;">Total Biaya Tahunan:</td>
+              <td style="text-align: right;">${formatRupiah(receipt.total_billed)}</td>
+            </tr>
+            <tr style="background: #f8fafc; font-weight: 600;">
+              <td colspan="3" style="text-align: right;">Total Sudah Terbayar:</td>
+              <td style="text-align: right; color: #047857;">${formatRupiah(receipt.total_paid)}</td>
+            </tr>
+            <tr style="background: #f8fafc; font-weight: 700;">
+              <td colspan="3" style="text-align: right;">Sisa Tagihan:</td>
+              <td style="text-align: right; color: ${isLunas ? '#047857' : '#dc2626'};">${formatRupiah(receipt.remaining_balance)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="terbilang-box">
+          <div style="font-size: 10px; color: #047857; margin-bottom: 2px;">Jumlah yang dibayarkan saat ini:</div>
+          <div class="terbilang-text">"${numberToWordsIndonesian(receipt.payment.amount)} Rupiah"</div>
+        </div>
+
+        <div class="footer-grid">
+          <div>
+            <p style="margin: 0 0 2px 0;">• Dokumen ini merupakan bukti cicilan sah dari Sistem Keuangan SIKESAN.</p>
+            <p style="margin: 0; font-family: monospace; font-size: 9px; color: #94a3b8;">ID Pembayaran: ${receipt.payment.id}</p>
+          </div>
+          <div style="text-align: center;">
+            <div class="stamp-lunas">${isLunas ? 'LUNAS' : 'CICILAN'}</div>
+            <div style="font-size: 9.5px; color: #64748b;">Petugas Kasir / Bendahara</div>
+            <div class="signature-line">
+              ${receipt.payment.creator?.name || 'Bendahara Pondok'}
+            </div>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  printFrame.contentWindow?.focus();
+  setTimeout(() => {
+    printFrame.contentWindow?.print();
+    setTimeout(() => {
+      if (document.body.contains(printFrame)) {
+        document.body.removeChild(printFrame);
+      }
+    }, 2000);
+  }, 250);
+}
+

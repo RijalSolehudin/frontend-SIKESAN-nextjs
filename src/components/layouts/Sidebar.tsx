@@ -40,6 +40,7 @@ const navigation = [
     icon: Wallet,
     children: [
       { name: 'Tagihan SPP', href: '/finance/spp', icon: Receipt },
+      { name: 'Biaya Tahunan', href: '/finance/annual-fees', icon: Building2 },
       { name: 'Top Up Saldo', href: '/finance/top-ups', icon: ArrowDownToLine },
       { name: 'Penerimaan Infaq', href: '/finance/infaq', icon: HeartHandshake },
       { name: 'Pengeluaran', href: '/finance/expenses', icon: ArrowUpFromLine },

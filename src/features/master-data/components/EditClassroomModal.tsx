@@ -23,11 +23,19 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useUpdateClass } from '../api/useUpdateClass';
 import { Classroom } from '../types';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Nama kelas minimal 2 karakter').max(100, 'Nama kelas maksimal 100 karakter'),
+  education_level: z.enum(['SD', 'SMP', 'SMA']).nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -46,28 +54,39 @@ export function EditClassroomModal({ classroom, isOpen, onClose }: EditClassroom
     mode: 'onTouched',
     defaultValues: {
       name: '',
+      education_level: null,
     },
   });
 
   useEffect(() => {
     if (classroom && isOpen) {
-      form.reset({ name: classroom.name });
+      form.reset({
+        name: classroom.name,
+        education_level: classroom.education_level ?? null,
+      });
     }
   }, [classroom, isOpen, form]);
 
   const onSubmit = (values: FormValues) => {
     if (!classroom) return;
 
-    updateMutation.mutate({ id: classroom.id, name: values.name }, {
-      onSuccess: () => {
-        toast.success('Kelas berhasil diperbarui');
-        onClose();
-        form.reset();
+    updateMutation.mutate(
+      {
+        id: classroom.id,
+        name: values.name,
+        education_level: values.education_level ?? null,
       },
-      onError: (error: any) => {
-        toast.error(error?.response?.data?.message || 'Gagal memperbarui kelas');
-      },
-    });
+      {
+        onSuccess: () => {
+          toast.success('Kelas berhasil diperbarui');
+          onClose();
+          form.reset();
+        },
+        onError: (error: any) => {
+          toast.error(error?.response?.data?.message || 'Gagal memperbarui kelas');
+        },
+      }
+    );
   };
 
   return (
@@ -78,7 +97,7 @@ export function EditClassroomModal({ classroom, isOpen, onClose }: EditClassroom
             Edit Nama Kelas
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Perbarui nama Ruang Belajar atau tingkatan kelas santri.
+            Perbarui nama Ruang Belajar atau tingkatan jenjang pendidikan santri.
           </DialogDescription>
         </DialogHeader>
 
@@ -93,6 +112,32 @@ export function EditClassroomModal({ classroom, isOpen, onClose }: EditClassroom
                   <FormControl>
                     <Input placeholder="Contoh: Kelas 10 A" className="rounded-xl h-10 text-sm" {...field} />
                   </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="education_level"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-semibold text-slate-700">Jenjang Pendidikan</FormLabel>
+                  <Select
+                    onValueChange={(val) => field.onChange(val || null)}
+                    value={field.value || undefined}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="rounded-xl h-10 text-sm">
+                        <SelectValue placeholder="Pilih jenjang pendidikan" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="SD">SD / Madrasah Ibtidaiyah (MI)</SelectItem>
+                      <SelectItem value="SMP">SMP / Madrasah Tsanawiyah (MTs)</SelectItem>
+                      <SelectItem value="SMA">SMA / Madrasah Aliyah (MA)</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage className="text-xs" />
                 </FormItem>
               )}

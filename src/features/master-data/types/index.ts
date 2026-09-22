@@ -20,6 +20,7 @@ export interface SingleDormitoryResponse {
 export interface Classroom {
   id: number;
   name: string;
+  education_level?: 'SD' | 'SMP' | 'SMA' | null;
   created_at: string;
   updated_at: string;
 }

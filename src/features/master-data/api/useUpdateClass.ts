@@ -5,6 +5,7 @@ import { Classroom } from '../types';
 export interface UpdateClassRequest {
   id: number;
   name: string;
+  education_level?: 'SD' | 'SMP' | 'SMA' | null;
 }
 
 export const useUpdateClass = () => {

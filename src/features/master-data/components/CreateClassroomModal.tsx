@@ -25,10 +25,18 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useCreateClass } from '../api/useCreateClass';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Nama kelas minimal 2 karakter').max(100, 'Nama kelas maksimal 100 karakter'),
+  education_level: z.enum(['SD', 'SMP', 'SMA']).nullable().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -42,6 +50,7 @@ export function CreateClassroomModal() {
     mode: 'onTouched',
     defaultValues: {
       name: '',
+      education_level: null,
     },
   });
 
@@ -50,7 +59,7 @@ export function CreateClassroomModal() {
       onSuccess: () => {
         toast.success('Kelas berhasil ditambahkan');
         setOpen(false);
-        form.reset({ name: '' });
+        form.reset({ name: '', education_level: null });
       },
       onError: (error: any) => {
         toast.error(error?.response?.data?.message || 'Gagal menambahkan kelas');
@@ -74,7 +83,7 @@ export function CreateClassroomModal() {
             Tambah Kelas Baru
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Masukkan nama rombongan belajar / tingkatan kelas santri.
+            Masukkan nama rombongan belajar dan jenjang pendidikan santri.
           </DialogDescription>
         </DialogHeader>
 
@@ -89,6 +98,32 @@ export function CreateClassroomModal() {
                   <FormControl>
                     <Input placeholder="Contoh: Kelas 7A (Tsanawiyyah)" className="rounded-xl h-10 text-sm" {...field} />
                   </FormControl>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="education_level"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-semibold text-slate-700">Jenjang Pendidikan</FormLabel>
+                  <Select
+                    onValueChange={(val) => field.onChange(val || null)}
+                    value={field.value || undefined}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="rounded-xl h-10 text-sm">
+                        <SelectValue placeholder="Pilih jenjang pendidikan" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="SD">SD / Madrasah Ibtidaiyah (MI)</SelectItem>
+                      <SelectItem value="SMP">SMP / Madrasah Tsanawiyah (MTs)</SelectItem>
+                      <SelectItem value="SMA">SMA / Madrasah Aliyah (MA)</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage className="text-xs" />
                 </FormItem>
               )}
