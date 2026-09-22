@@ -77,7 +77,7 @@ export function RoleView() {
         />
         <MetricCard
           title="Sistem Keamanan"
-          value="Spatie RBAC"
+          value="RBAC"
           icon={<ShieldAlert className="h-4 w-4" />}
           isLoading={false}
           variant="emerald"

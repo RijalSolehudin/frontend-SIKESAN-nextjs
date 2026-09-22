@@ -101,7 +101,7 @@ export function LedgerView() {
               <BookOpenText className="h-4 w-4" />
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
-              Buku Besar (Ledger Kas)
+              Ledger Kas ( Seluruh Mutasi )
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-500">
@@ -109,7 +109,7 @@ export function LedgerView() {
           </p>
         </div>
 
-        {/* Filter Month, Year, and Export Button */}
+        {/* Filter Month, Year, and Export Butn Ï*/}
         <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
           {/* Month Filter */}
           <Select

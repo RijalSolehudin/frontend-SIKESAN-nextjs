@@ -25,7 +25,7 @@ export function ClassroomView() {
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-500">
-            Kelola tingkatan dan rombel kelas santri untuk pembagian kelompok belajar dan SPP.
+            Kelola tingkatan dan kelas santri untuk pembagian kelompok belajar dan SPP.
           </p>
         </div>
         <CreateClassroomModal />
@@ -35,7 +35,7 @@ export function ClassroomView() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <MetricCard
           title="Total Kelas Terdaftar"
-          value={`${totalClasses} Rombel`}
+          value={`${totalClasses} kelas`}
           icon={<School className="h-4 w-4" />}
           isLoading={isLoading}
           variant="emerald"
@@ -47,7 +47,7 @@ export function ClassroomView() {
           icon={<Users className="h-4 w-4" />}
           isLoading={isLoading}
           variant="blue"
-          badge="Rombel Santri"
+          badge="Ruang Belajar Santri"
           valueClassName="text-xl sm:text-2xl text-blue-700"
         />
         <MetricCard

@@ -78,7 +78,7 @@ export function ClassroomTable({ data, isLoading, isError, onRetry }: ClassroomT
           <thead className="text-xs text-slate-500 uppercase bg-slate-50/80 border-b border-slate-200/80">
             <tr>
               <th scope="col" className="px-5 py-3.5 font-semibold">ID</th>
-              <th scope="col" className="px-5 py-3.5 font-semibold">Nama Rombel / Kelas</th>
+              <th scope="col" className="px-5 py-3.5 font-semibold">Nama Kelas</th>
               <th scope="col" className="px-5 py-3.5 font-semibold">Tanggal Dibuat</th>
               <th scope="col" className="px-5 py-3.5 font-semibold text-right">Aksi</th>
             </tr>
@@ -97,8 +97,8 @@ export function ClassroomTable({ data, isLoading, isError, onRetry }: ClassroomT
                 </td>
                 <td className="px-5 py-3.5 text-right">
                   <div className="inline-flex items-center gap-1.5">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => setEditingClass(cls)}
                       className="h-8 px-2.5 text-xs text-slate-700 hover:text-emerald-700 hover:border-emerald-300"
@@ -106,8 +106,8 @@ export function ClassroomTable({ data, isLoading, isError, onRetry }: ClassroomT
                       <Pencil className="h-3.5 w-3.5 mr-1" />
                       Edit
                     </Button>
-                    <Button 
-                      variant="destructiveOutline" 
+                    <Button
+                      variant="destructiveOutline"
                       size="sm"
                       onClick={() => setDeletingId(cls.id)}
                       disabled={deleteMutation.isPending}
@@ -136,11 +136,11 @@ export function ClassroomTable({ data, isLoading, isError, onRetry }: ClassroomT
           isLoading={isLoading}
         />
       </div>
-      
-      <EditClassroomModal 
-        classroom={editingClass} 
-        isOpen={!!editingClass} 
-        onClose={() => setEditingClass(null)} 
+
+      <EditClassroomModal
+        classroom={editingClass}
+        isOpen={!!editingClass}
+        onClose={() => setEditingClass(null)}
       />
 
       <ConfirmModal

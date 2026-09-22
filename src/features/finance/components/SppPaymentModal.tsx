@@ -179,19 +179,16 @@ function SppPaymentForm({ student, bills, onClose, onSuccessPayment }: SppPaymen
           Catat Pembayaran SPP (Manual)
         </DialogTitle>
         <DialogDescription className="text-xs text-slate-500">
-          Pilih bulan tagihan yang akan dibayar oleh <strong>{student.name}</strong> (NIS: {student.nis}). Pembayaran menerapkan prinsip FIFO (bulan tertua didahulukan).
+          Pilih bulan tagihan yang akan dibayar oleh <strong>{student.name}</strong> (NIS: {student.nis}).
         </DialogDescription>
       </DialogHeader>
-      
+
       <div className="py-2 space-y-2">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
               Tagihan Belum Lunas:
             </h4>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-              FIFO (Urutan Tertua)
-            </span>
           </div>
           <span className="text-[11px] text-slate-400">
             {unpaidBills.length} bulan tertunggak
@@ -210,19 +207,17 @@ function SppPaymentForm({ student, bills, onClose, onSuccessPayment }: SppPaymen
               const isOldest = index === 0;
 
               return (
-                <div 
-                  key={bill.id} 
-                  className={`flex justify-between items-center p-3 rounded-xl border transition-all cursor-pointer ${
-                    isSelected 
-                      ? 'bg-emerald-50/80 border-emerald-400 shadow-2xs ring-1 ring-emerald-500/20' 
-                      : 'bg-white/80 border-slate-200/80 hover:bg-slate-50'
-                  }`}
+                <div
+                  key={bill.id}
+                  className={`flex justify-between items-center p-3 rounded-xl border transition-all cursor-pointer ${isSelected
+                    ? 'bg-emerald-50/80 border-emerald-400 shadow-2xs ring-1 ring-emerald-500/20'
+                    : 'bg-white/80 border-slate-200/80 hover:bg-slate-50'
+                    }`}
                   onClick={() => toggleBill(bill.id)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className={`h-5 w-5 rounded-md border flex items-center justify-center transition-colors ${
-                      isSelected ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 bg-white'
-                    }`}>
+                    <div className={`h-5 w-5 rounded-md border flex items-center justify-center transition-colors ${isSelected ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 bg-white'
+                      }`}>
                       {isSelected && <Check className="h-3.5 w-3.5 stroke-[3]" />}
                     </div>
                     <div>
@@ -266,7 +261,7 @@ function SppPaymentForm({ student, bills, onClose, onSuccessPayment }: SppPaymen
               <FormItem>
                 <FormLabel className="text-xs font-semibold text-slate-700">Total Nominal Pembayaran</FormLabel>
                 <FormControl>
-                  <input 
+                  <input
                     type="text"
                     readOnly
                     tabIndex={-1}
@@ -355,17 +350,17 @@ function SppPaymentForm({ student, bills, onClose, onSuccessPayment }: SppPaymen
           </div>
 
           <DialogFooter className="mt-6 pt-3 border-t border-slate-100 flex flex-row justify-end gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose} 
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
               disabled={payMutation.isPending}
               className="rounded-lg"
             >
               Batal
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={payMutation.isPending || unpaidBills.length === 0}
               className="rounded-lg font-semibold"
             >
@@ -383,11 +378,11 @@ export function SppPaymentModal({ student, bills, isOpen, onClose, onSuccessPaym
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[520px] glass-modal p-6 max-h-[90vh] overflow-y-auto">
         {student && (
-          <SppPaymentForm 
-            key={student.id} 
-            student={student} 
-            bills={bills} 
-            onClose={onClose} 
+          <SppPaymentForm
+            key={student.id}
+            student={student}
+            bills={bills}
+            onClose={onClose}
             onSuccessPayment={onSuccessPayment}
           />
         )}

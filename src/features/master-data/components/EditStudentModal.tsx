@@ -193,7 +193,7 @@ export function EditStudentModal({ student, isOpen, onClose }: EditStudentModalP
                 name="class_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-semibold text-slate-700">Rombel / Kelas</FormLabel>
+                    <FormLabel className="text-xs font-semibold text-slate-700">Ruang Belajar / Kelas</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger className="h-10 rounded-xl">
@@ -241,17 +241,17 @@ export function EditStudentModal({ student, isOpen, onClose }: EditStudentModalP
             </div>
 
             <DialogFooter className="mt-6 pt-3 border-t border-slate-100 flex flex-row justify-end gap-2">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={onClose}
                 disabled={updateMutation.isPending}
                 className="rounded-lg"
               >
                 Batal
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={updateMutation.isPending}
                 className="rounded-lg font-semibold"
               >

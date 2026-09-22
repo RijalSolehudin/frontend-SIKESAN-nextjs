@@ -87,7 +87,7 @@ export function StudentView() {
           valueClassName="text-xl sm:text-2xl text-slate-800"
         />
         <MetricCard
-          title="Nonaktif / Mutasi"
+          title="Nonaktif"
           value={`${inactiveCount} Santri`}
           icon={<UserX className="h-4 w-4" />}
           isLoading={isLoading}
@@ -116,8 +116,8 @@ export function StudentView() {
             </div>
 
             <div className="w-full sm:w-52">
-              <Select 
-                value={selectedClassId} 
+              <Select
+                value={selectedClassId}
                 onValueChange={(val) => {
                   setSelectedClassId(val);
                   setPage(1);
@@ -148,11 +148,11 @@ export function StudentView() {
           </div>
         </div>
 
-        <StudentTable 
-          data={students} 
-          isLoading={isLoading} 
-          isError={isError} 
-          onRetry={() => refetch()} 
+        <StudentTable
+          data={students}
+          isLoading={isLoading}
+          isError={isError}
+          onRetry={() => refetch()}
           pagination={data ? {
             currentPage: data.current_page || page,
             totalPages: data.last_page || 1,

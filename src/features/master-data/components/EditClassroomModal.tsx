@@ -57,7 +57,7 @@ export function EditClassroomModal({ classroom, isOpen, onClose }: EditClassroom
 
   const onSubmit = (values: FormValues) => {
     if (!classroom) return;
-    
+
     updateMutation.mutate({ id: classroom.id, name: values.name }, {
       onSuccess: () => {
         toast.success('Kelas berhasil diperbarui');
@@ -78,10 +78,10 @@ export function EditClassroomModal({ classroom, isOpen, onClose }: EditClassroom
             Edit Nama Kelas
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Perbarui nama rombel atau tingkatan kelas santri.
+            Perbarui nama Ruang Belajar atau tingkatan kelas santri.
           </DialogDescription>
         </DialogHeader>
-        
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
             <FormField
@@ -98,17 +98,17 @@ export function EditClassroomModal({ classroom, isOpen, onClose }: EditClassroom
               )}
             />
             <DialogFooter className="mt-6 pt-3 border-t border-slate-100 flex flex-row justify-end gap-2">
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={onClose}
                 disabled={updateMutation.isPending}
                 className="rounded-lg"
               >
                 Batal
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 disabled={updateMutation.isPending}
                 className="rounded-lg font-semibold"
               >
