@@ -7,10 +7,15 @@ import { ErrorState } from '@/components/ui/error-state';
 import { EmptyState } from '@/components/ui/empty-state';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 
-export function LedgerTable() {
+interface LedgerTableProps {
+  month?: number | 'all';
+  year?: number | 'all';
+}
+
+export function LedgerTable({ month, year }: LedgerTableProps = {}) {
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(15);
-  const { data, isLoading, isError, refetch } = useGetLedger({ page, per_page: perPage });
+  const { data, isLoading, isError, refetch } = useGetLedger({ page, per_page: perPage, month, year });
 
   const formatCurrency = (amount: number = 0) => {
     return new Intl.NumberFormat('id-ID', {

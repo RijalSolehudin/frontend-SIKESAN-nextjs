@@ -283,4 +283,49 @@ test.describe('Alur Finansial Utama SIKESAN', () => {
       await expect(page.getByText(/pembayaran spp berhasil dicatat/i)).toBeVisible({ timeout: 10000 });
     }
   });
+
+  test('Bendahara dapat memfilter Buku Besar berdasarkan bulan dan tahun serta membuka modal pratinjau ekspor PDF formal', async ({ page }) => {
+    // 1. Login Petugas / Super Admin
+    await page.goto('/login');
+    await page.getByLabel('Username').fill('superadmin');
+    await page.getByLabel('Password').fill('password');
+    await page.getByRole('button', { name: /masuk ke dasbor|login/i }).click();
+    await expect(page.getByRole('heading', { name: /dashboard bendahara/i })).toBeVisible({ timeout: 10000 });
+
+    // 2. Buka Halaman Buku Besar (Ledger)
+    await page.goto('/finance/ledger');
+    await expect(page.getByRole('heading', { name: /buku besar \(ledger kas\)/i })).toBeVisible({ timeout: 10000 });
+
+    // 3. Verifikasi Filter Bulan dan Tahun terlihat
+    const monthSelect = page.locator('button[role="combobox"]').first();
+    const yearSelect = page.locator('button[role="combobox"]').nth(1);
+    await expect(monthSelect).toBeVisible();
+    await expect(yearSelect).toBeVisible();
+
+    // 4. Ubah Filter Bulan ke "Semua Bulan (All Time)"
+    await monthSelect.click();
+    const allMonthsOption = page.getByRole('option', { name: /semua bulan/i });
+    await expect(allMonthsOption).toBeVisible();
+    await allMonthsOption.click();
+
+    // 5. Buka Modal Ekspor PDF
+    const exportBtn = page.getByRole('button', { name: /cetak \/ ekspor pdf/i });
+    await expect(exportBtn).toBeVisible();
+    await exportBtn.click();
+
+    // 6. Verifikasi Modal Pratinjau Dokumen Resmi
+    const exportModal = page.getByRole('dialog');
+    await expect(exportModal).toBeVisible();
+    await expect(exportModal.getByText(/pratinjau dokumen resmi buku besar/i)).toBeVisible();
+    await expect(exportModal.getByText(/pondok pesantren sikesan/i).first()).toBeVisible();
+    await expect(exportModal.getByText(/laporan buku besar kas \(general ledger\)/i).first()).toBeVisible();
+
+    // 7. Verifikasi tombol Cetak / Simpan PDF aktif di modal
+    const printBtn = exportModal.getByRole('button', { name: /cetak \/ simpan pdf/i });
+    await expect(printBtn).toBeVisible();
+
+    // 8. Tutup Modal
+    await exportModal.getByRole('button', { name: /tutup/i }).first().click();
+    await expect(exportModal).not.toBeVisible();
+  });
 });

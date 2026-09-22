@@ -94,16 +94,38 @@ export interface LedgerTransaction {
   amount: number;
   reference_id: string;
   is_debit: boolean;
+  proof_url?: string | null;
+}
+
+export interface LedgerPeriod {
+  month: number | null;
+  year: number | null;
+}
+
+export interface LedgerIncomeBreakdown {
+  spp: number;
+  infaq: number;
+  total: number;
+}
+
+export interface LedgerExpenseBreakdown {
+  total: number;
+}
+
+export interface LedgerData {
+  period?: LedgerPeriod;
+  income?: LedgerIncomeBreakdown;
+  expense?: LedgerExpenseBreakdown;
+  net_balance?: number;
+  data: LedgerTransaction[];
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
 }
 
 export interface LedgerResponse {
-  data: {
-    data: LedgerTransaction[];
-    current_page: number;
-    last_page: number;
-    per_page: number;
-    total: number;
-  };
+  data: LedgerData;
 }
 
 export interface SppPaymentVerification {
