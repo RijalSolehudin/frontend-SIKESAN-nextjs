@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MoneyInput } from '@/components/ui/money-input';
 import {
   Select,
   SelectContent,
@@ -21,7 +22,14 @@ import {
 import { AnnualFeeBill } from '../types/annual-fees';
 import { usePayAnnualFeeBill } from '../api/useAnnualFeePayment';
 import { toast } from 'sonner';
-import { CreditCard, Receipt, Wallet, AlertCircle } from 'lucide-react';
+import {
+  CreditCard,
+  AlertCircle,
+  UploadCloud,
+  FileText,
+  ImageIcon,
+  X,
+} from 'lucide-react';
 
 interface AnnualFeePaymentModalProps {
   bill: AnnualFeeBill | null;
@@ -40,7 +48,26 @@ export function AnnualFeePaymentModal({
   const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'TRANSFER'>('CASH');
   const [notes, setNotes] = useState<string>('');
 
+  // Proof upload state
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [inputKey, setInputKey] = useState<number>(Date.now());
+
   const payMutation = usePayAnnualFeeBill();
+
+  // Reset file preview on close
+  useEffect(() => {
+    if (!isOpen) {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      setAmount(0);
+      setNotes('');
+      setInputKey(Date.now());
+    }
+  }, [isOpen]);
 
   if (!bill) return null;
 
@@ -51,9 +78,31 @@ export function AnnualFeePaymentModal({
     return 'Rp ' + (val || 0).toLocaleString('id-ID');
   };
 
-  const handleQuickAmount = (ratio: number) => {
-    const calculated = Math.round(remaining * ratio);
-    setAmount(calculated);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ukuran berkas maksimal 5MB');
+      return;
+    }
+
+    setSelectedFile(file);
+    if (file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    } else {
+      setPreviewUrl(null);
+    }
+  };
+
+  const handleClearFile = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setInputKey(Date.now());
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -75,13 +124,12 @@ export function AnnualFeePaymentModal({
         amount,
         payment_method: paymentMethod,
         notes: notes || undefined,
+        proof: selectedFile || undefined,
       },
       {
         onSuccess: (res) => {
           toast.success('Pembayaran cicilan berhasil dicatat!');
           onClose();
-          setAmount(0);
-          setNotes('');
           if (onSuccessPayment && res.data?.id) {
             onSuccessPayment(res.data.id);
           }
@@ -95,7 +143,7 @@ export function AnnualFeePaymentModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px] glass-modal p-6">
+      <DialogContent className="sm:max-w-[520px] glass-modal p-6">
         <DialogHeader>
           <div className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700">
@@ -135,50 +183,15 @@ export function AnnualFeePaymentModal({
             </div>
           </div>
 
-          {/* Quick Buttons */}
+          {/* Input Amount using MoneyInput */}
           <div className="space-y-1.5">
-            <Label className="text-xs text-slate-600">Pilihan Cepat Nominal:</Label>
-            <div className="grid grid-cols-3 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuickAmount(0.25)}
-                className="text-xs rounded-xl h-8 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50"
-              >
-                25% ({formatRupiah(Math.round(remaining * 0.25))})
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuickAmount(0.5)}
-                className="text-xs rounded-xl h-8 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50"
-              >
-                50% ({formatRupiah(Math.round(remaining * 0.5))})
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleQuickAmount(1)}
-                className="text-xs rounded-xl h-8 border-emerald-300 bg-emerald-50/60 font-semibold text-emerald-800"
-              >
-                Lunas (100%)
-              </Button>
-            </div>
-          </div>
-
-          {/* Input Amount */}
-          <div className="space-y-1.5">
-            <Label className="text-xs text-slate-700 font-semibold">Nominal Cicilan yang Dibayar (Rp):</Label>
-            <Input
-              type="number"
-              min={1}
-              max={remaining}
-              value={amount || ''}
-              onChange={(e) => setAmount(Number(e.target.value))}
-              placeholder="Masukkan nominal cicilan..."
+            <Label className="text-xs text-slate-700 font-semibold">
+              Nominal Cicilan yang Dibayar:
+            </Label>
+            <MoneyInput
+              value={amount ? String(amount) : ''}
+              onChange={(val) => setAmount(Number(val) || 0)}
+              placeholder="Contoh: 1.000.000"
               className="rounded-xl h-10 font-mono font-bold text-base text-emerald-900"
               required
             />
@@ -190,7 +203,7 @@ export function AnnualFeePaymentModal({
             )}
           </div>
 
-          {/* Payment Method */}
+          {/* Payment Method & Notes */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-slate-700 font-semibold">Metode Pembayaran:</Label>
@@ -218,6 +231,78 @@ export function AnnualFeePaymentModal({
                 className="rounded-xl h-10 text-xs"
               />
             </div>
+          </div>
+
+          {/* Bukti Pembayaran / Upload Nota Kasir */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
+              <span>Bukti Pembayaran / Nota Kasir:</span>
+              <span className="text-[10px] text-slate-400 font-normal">Opsional (JPG, PNG, PDF maks 5MB)</span>
+            </label>
+
+            <input
+              key={inputKey}
+              id="annual-fee-payment-proof-input"
+              type="file"
+              accept="image/jpeg,image/png,image/jpg,image/webp,application/pdf"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+
+            {!selectedFile ? (
+              <label
+                htmlFor="annual-fee-payment-proof-input"
+                className="border-2 border-dashed border-slate-200 hover:border-emerald-500/60 hover:bg-emerald-50/20 rounded-xl p-3 transition-colors cursor-pointer flex items-center justify-center gap-3 text-center"
+              >
+                <div className="h-8 w-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <UploadCloud className="h-4 w-4" />
+                </div>
+                <div className="text-left">
+                  <p className="text-xs font-semibold text-slate-700">Pilih atau unggah bukti pembayaran</p>
+                  <p className="text-[11px] text-slate-400">Klik di sini untuk memilih foto nota / bukti transfer</p>
+                </div>
+              </label>
+            ) : (
+              <div className="flex items-center justify-between p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/40 text-xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  {previewUrl ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="h-10 w-10 rounded-lg object-cover border border-emerald-200 shrink-0"
+                    />
+                  ) : (
+                    <div className="h-10 w-10 rounded-lg bg-emerald-100/80 text-emerald-700 flex items-center justify-center shrink-0">
+                      {selectedFile.type === 'application/pdf' ? (
+                        <FileText className="h-5 w-5" />
+                      ) : (
+                        <ImageIcon className="h-5 w-5" />
+                      )}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-800 truncate max-w-[260px] text-xs">
+                      {selectedFile.name}
+                    </p>
+                    <p className="text-[10px] text-slate-400">
+                      {(selectedFile.size / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
+                </div>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={handleClearFile}
+                  className="h-7 w-7 text-slate-400 hover:text-red-500 rounded-lg shrink-0"
+                  title="Hapus berkas"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </div>
 
           <DialogFooter className="mt-6 pt-3 border-t border-slate-100 flex flex-row justify-end gap-2">

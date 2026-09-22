@@ -11,6 +11,7 @@ import { AnnualFeeBreakdownModal } from './AnnualFeeBreakdownModal';
 import { AnnualFeeReceiptModal } from './AnnualFeeReceiptModal';
 import { AnnualFeePricingTab } from './AnnualFeePricingTab';
 import { AnnualFeeVerificationTable } from './AnnualFeeVerificationTable';
+import { ProofPreviewModal } from './ProofPreviewModal';
 import { DataTablePagination } from '@/components/ui/data-table-pagination';
 import { MetricCard } from '@/features/dashboard/components/MetricCard';
 import { Button } from '@/components/ui/button';
@@ -37,13 +38,12 @@ import {
   CreditCard,
   Users,
   CheckCircle2,
-  AlertCircle,
   Sliders,
   Clock,
   FileText,
   Building2,
-  Layers,
   Sparkles,
+  ImageIcon,
 } from 'lucide-react';
 
 export function AnnualFeeView() {
@@ -73,6 +73,10 @@ export function AnnualFeeView() {
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [selectedAcademicYearId, setSelectedAcademicYearId] = useState<string>('');
 
+  // Proof Preview Modal State
+  const [selectedProofPayment, setSelectedProofPayment] = useState<any | null>(null);
+  const [proofModalOpen, setProofModalOpen] = useState(false);
+
   // Fetch queries
   const { data: billsResponse, isLoading, refetch } = useGetAnnualFeeBills({
     page,
@@ -100,8 +104,10 @@ export function AnnualFeeView() {
   const handleOpenBreakdown = (bill: AnnualFeeBill) => {
     setBreakdownModalData({
       isOpen: true,
-      title: `Rincian Pos Biaya - ${bill.student?.name}`,
-      subtitle: `${bill.student?.classroom?.name || '-'} (${bill.student_type === 'NEW' ? 'Santri Baru' : 'Santri Lama'})`,
+      title: `Rincian Biaya - ${bill.student?.name}`,
+      subtitle: `${bill.student?.classroom?.name || '-'} (${
+        bill.student_type === 'NEW' ? 'Santri Baru' : 'Santri Lama'
+      })`,
       items: bill.snapshot_breakdown,
       totalAmount: bill.total_amount,
     });
@@ -136,57 +142,87 @@ export function AnnualFeeView() {
 
   return (
     <div className="space-y-6">
-      {/* Top Header & Main Tabs */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Building2 className="h-7 w-7 text-emerald-600" />
-            Biaya Tahunan & Uang Pangkal
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
+      {/* Page Header (matching SppView.tsx) */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <Building2 className="h-4 w-4" />
+            </div>
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
+              Biaya Tahunan & Uang Pangkal
+            </h1>
+          </div>
+          <p className="text-xs sm:text-sm text-slate-500">
             Pengelolaan uang pangkal santri baru, biaya daftar ulang tahunan, dan skema cicilan bebas.
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 rounded-2xl border border-slate-200/80 shadow-xs">
-          <Button
-            type="button"
-            variant={activeTab === 'bills' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('bills')}
-            className="rounded-xl text-xs font-semibold flex items-center gap-1.5"
-          >
-            <Receipt className="h-3.5 w-3.5" />
-            Tagihan Santri
-          </Button>
+        <Button
+          type="button"
+          onClick={() => setIsGenerateModalOpen(true)}
+          className="rounded-xl text-xs bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-sm"
+        >
+          <Sparkles className="h-4 w-4" />
+          <span>Generate Tagihan Tahunan</span>
+        </Button>
+      </div>
 
-          <Button
-            type="button"
-            variant={activeTab === 'verifications' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('verifications')}
-            className="rounded-xl text-xs font-semibold flex items-center gap-1.5 relative"
-          >
-            <Clock className="h-3.5 w-3.5" />
-            Verifikasi Online
-            {pendingCount > 0 && (
-              <span className="h-5 px-1.5 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center">
-                {pendingCount}
-              </span>
-            )}
-          </Button>
+      {/* Main Tab Navigation (matching SppView.tsx) */}
+      <div className="flex items-center gap-2 border-b border-slate-200/80 pb-3">
+        <button
+          type="button"
+          onClick={() => setActiveTab('bills')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            activeTab === 'bills'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80'
+          }`}
+        >
+          <Users className="h-4 w-4" />
+          <span>Tagihan Santri</span>
+        </button>
 
-          <Button
-            type="button"
-            variant={activeTab === 'pricing' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setActiveTab('pricing')}
-            className="rounded-xl text-xs font-semibold flex items-center gap-1.5"
-          >
-            <Sliders className="h-3.5 w-3.5" />
-            Konfigurasi Tarif
-          </Button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setActiveTab('verifications')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            activeTab === 'verifications'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80'
+          }`}
+        >
+          <Clock
+            className={`h-4 w-4 ${
+              activeTab === 'verifications' ? 'text-white' : 'text-amber-500'
+            }`}
+          />
+          <span>Verifikasi Online</span>
+          {pendingCount > 0 && (
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold transition-all ${
+                activeTab === 'verifications'
+                  ? 'bg-white text-emerald-700'
+                  : 'bg-amber-500 text-white animate-pulse'
+              }`}
+            >
+              {pendingCount} Menunggu
+            </span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('pricing')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            activeTab === 'pricing'
+              ? 'bg-emerald-600 text-white shadow-sm'
+              : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80'
+          }`}
+        >
+          <Sliders className="h-4 w-4" />
+          <span>Konfigurasi Tarif</span>
+        </button>
       </div>
 
       {activeTab === 'pricing' && <AnnualFeePricingTab />}
@@ -198,47 +234,48 @@ export function AnnualFeeView() {
           {/* Summary Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
-              title="Total Tagihan Tahunan"
+              title="Total Nilai Tagihan"
               value={formatRupiah(summary?.total_billed || 0)}
-              icon={<Building2 className="h-5 w-5 text-emerald-600" />}
+              variant="blue"
+              icon={<Receipt className="h-5 w-5" />}
             />
             <MetricCard
-              title="Total Sudah Terbayar"
+              title="Total Penerimaan Terbayar"
               value={formatRupiah(summary?.total_paid || 0)}
-              icon={<CheckCircle2 className="h-5 w-5 text-emerald-600" />}
+              variant="emerald"
+              icon={<CheckCircle2 className="h-5 w-5" />}
             />
             <MetricCard
-              title="Sisa Piutang Biaya"
+              title="Sisa Piutang / Tunggakan"
               value={formatRupiah(summary?.total_remaining || 0)}
               variant="rose"
-              icon={<AlertCircle className="h-5 w-5 text-rose-600" />}
+              icon={<Clock className="h-5 w-5" />}
             />
             <MetricCard
-              title="Total Tagihan Diterbitkan"
-              value={`${meta?.total || 0} Santri`}
-              variant="blue"
-              icon={<Users className="h-5 w-5 text-blue-600" />}
+              title="Total Santri Terdata"
+              value={meta?.total ? `${meta.total} Santri` : '0 Santri'}
+              variant="amber"
+              icon={<Users className="h-5 w-5" />}
             />
           </div>
 
-          {/* Filters & Actions Bar */}
-          <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3 bg-white/70 backdrop-blur-md p-4 rounded-2xl border border-slate-200/80 shadow-xs">
-            <div className="flex flex-wrap items-center gap-2.5 flex-1">
-              {/* Search */}
-              <div className="relative w-full sm:w-[220px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-                <Input
-                  placeholder="Cari nama / NIS..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 h-9 text-xs rounded-xl bg-white border-slate-200"
-                />
-              </div>
+          {/* Filters Bar */}
+          <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white/70 backdrop-blur-md p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="Cari nama santri atau NIS..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 h-9 text-xs rounded-xl bg-white/80"
+              />
+            </div>
 
-              {/* Jenjang Filter */}
-              <Select value={selectedLevel} onValueChange={setSelectedLevel}>
-                <SelectTrigger className="w-[130px] h-9 text-xs rounded-xl bg-white">
-                  <SelectValue placeholder="Semua Jenjang" />
+            <div className="flex flex-wrap items-center gap-2">
+              <Select value={selectedLevel} onValueChange={(val) => { setSelectedLevel(val); setPage(1); }}>
+                <SelectTrigger className="w-[125px] h-9 text-xs rounded-xl bg-white">
+                  <SelectValue placeholder="Jenjang" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua Jenjang</SelectItem>
@@ -248,43 +285,32 @@ export function AnnualFeeView() {
                 </SelectContent>
               </Select>
 
-              {/* Kelas Filter */}
-              <Select value={selectedClassId} onValueChange={setSelectedClassId}>
-                <SelectTrigger className="w-[140px] h-9 text-xs rounded-xl bg-white">
+              <Select value={selectedClassId} onValueChange={(val) => { setSelectedClassId(val); setPage(1); }}>
+                <SelectTrigger className="w-[130px] h-9 text-xs rounded-xl bg-white">
                   <SelectValue placeholder="Semua Kelas" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Semua Kelas</SelectItem>
-                  {(classesData || []).map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.name} {c.education_level ? `(${c.education_level})` : ''}
+                  {(classesData || []).map((cls) => (
+                    <SelectItem key={cls.id} value={String(cls.id)}>
+                      {cls.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              {/* Status Filter */}
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <Select value={selectedStatus} onValueChange={(val) => { setSelectedStatus(val); setPage(1); }}>
                 <SelectTrigger className="w-[130px] h-9 text-xs rounded-xl bg-white">
-                  <SelectValue placeholder="Status Pelunasan" />
+                  <SelectValue placeholder="Status Tagihan" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="ALL">Semua Status</SelectItem>
                   <SelectItem value="UNPAID">Belum Bayar</SelectItem>
-                  <SelectItem value="PARTIAL">Mencicil (Sebagian)</SelectItem>
+                  <SelectItem value="PARTIAL">Sedang Mencicil</SelectItem>
                   <SelectItem value="PAID">Lunas</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
-            <Button
-              type="button"
-              onClick={() => setIsGenerateModalOpen(true)}
-              className="rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white flex items-center gap-1.5 shadow-xs"
-            >
-              <Sparkles className="h-4 w-4" />
-              Generate Tagihan Massal
-            </Button>
           </div>
 
           {/* Bills Table */}
@@ -306,22 +332,29 @@ export function AnnualFeeView() {
                     <th className="px-5 py-3.5">Kelas & Jenjang</th>
                     <th className="px-5 py-3.5">Kategori</th>
                     <th className="px-5 py-3.5 text-right">Total Biaya</th>
+                    <th className="px-5 py-3.5 text-center">Rincian Biaya</th>
                     <th className="px-5 py-3.5 text-center">Progres Pembayaran</th>
                     <th className="px-5 py-3.5 text-right">Sisa Tagihan</th>
+                    <th className="px-5 py-3.5 text-center">Bukti Bayar</th>
                     <th className="px-5 py-3.5 text-center">Status</th>
                     <th className="px-5 py-3.5 text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {bills.map((bill) => {
-                    const progress = Math.min(100, Math.round((bill.paid_amount / bill.total_amount) * 100));
+                    const progress = Math.min(
+                      100,
+                      Math.round((bill.paid_amount / bill.total_amount) * 100)
+                    );
                     const isLunas = bill.status === 'PAID' || bill.remaining_amount <= 0;
 
                     return (
                       <tr key={bill.id} className="hover:bg-slate-50/40 transition-colors">
                         <td className="px-5 py-3.5">
                           <span className="font-bold text-slate-900 block">{bill.student?.name}</span>
-                          <span className="font-mono text-[11px] text-slate-400">NIS: {bill.student?.nis}</span>
+                          <span className="font-mono text-[11px] text-slate-400">
+                            NIS: {bill.student?.nis}
+                          </span>
                         </td>
                         <td className="px-5 py-3.5">
                           <span className="text-slate-800 font-medium block">
@@ -348,17 +381,26 @@ export function AnnualFeeView() {
                           <span className="font-mono font-bold text-slate-900 block text-xs">
                             {formatRupiah(bill.total_amount)}
                           </span>
-                          <button
+                        </td>
+                        {/* Rincian Biaya Trigger Button */}
+                        <td className="px-5 py-3.5 text-center whitespace-nowrap">
+                          <Button
                             type="button"
+                            variant="outline"
+                            size="icon-sm"
                             onClick={() => handleOpenBreakdown(bill)}
-                            className="text-[11px] text-emerald-600 hover:text-emerald-700 hover:underline font-medium mt-0.5"
+                            className="h-8 w-8 text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200/80 rounded-lg shadow-2xs transition-colors mx-auto"
+                            title="Lihat Rincian Biaya"
+                            aria-label="Lihat Rincian Biaya"
                           >
-                            Lihat Rincian Pos
-                          </button>
+                            <FileText className="h-4 w-4 text-emerald-600" />
+                          </Button>
                         </td>
                         <td className="px-5 py-3.5 text-center min-w-[140px]">
                           <div className="flex justify-between items-center text-[10px] text-slate-500 mb-1">
-                            <span className="font-mono text-emerald-700 font-bold">{formatRupiah(bill.paid_amount)}</span>
+                            <span className="font-mono text-emerald-700 font-bold">
+                              {formatRupiah(bill.paid_amount)}
+                            </span>
                             <span>{progress}%</span>
                           </div>
                           <div className="w-full bg-slate-200/80 rounded-full h-1.5 overflow-hidden">
@@ -374,6 +416,41 @@ export function AnnualFeeView() {
                           <span className={isLunas ? 'text-emerald-700' : 'text-red-600'}>
                             {formatRupiah(bill.remaining_amount)}
                           </span>
+                        </td>
+                        {/* Bukti Bayar Column (matching SppView.tsx) */}
+                        <td className="px-5 py-3.5 text-center whitespace-nowrap">
+                          {(() => {
+                            const paymentWithProof = bill.payments?.find(
+                              (p) => p.proof_url || p.proof_full_url
+                            );
+
+                            return paymentWithProof ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="icon-sm"
+                                onClick={() => {
+                                  setSelectedProofPayment({
+                                    ...paymentWithProof,
+                                    bills: [{ student: bill.student }],
+                                  });
+                                  setProofModalOpen(true);
+                                }}
+                                className="h-8 w-8 text-emerald-700 bg-emerald-50/80 hover:bg-emerald-100 hover:text-emerald-800 border-emerald-200/80 rounded-lg shadow-2xs transition-colors mx-auto"
+                                title="Lihat Foto Bukti Pembayaran / Nota"
+                                aria-label="Lihat Bukti Pembayaran"
+                              >
+                                <ImageIcon className="h-4 w-4 text-emerald-600" />
+                              </Button>
+                            ) : (
+                              <span
+                                className="text-slate-300 font-bold text-xs select-none"
+                                title="Tidak ada lampiran bukti"
+                              >
+                                -
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="px-5 py-3.5 text-center">
                           <span
@@ -434,6 +511,7 @@ export function AnnualFeeView() {
                   setPerPage(newSize);
                   setPage(1);
                 }}
+                isLoading={isLoading}
               />
             )}
           </div>
@@ -454,7 +532,7 @@ export function AnnualFeeView() {
       {/* Breakdown Modal */}
       <AnnualFeeBreakdownModal
         isOpen={breakdownModalData.isOpen}
-        onClose={() => setBreakdownModalData({ ...breakdownModalData, isOpen: false })}
+        onClose={() => setBreakdownModalData((prev) => ({ ...prev, isOpen: false }))}
         title={breakdownModalData.title}
         subtitle={breakdownModalData.subtitle}
         items={breakdownModalData.items}
@@ -468,14 +546,28 @@ export function AnnualFeeView() {
         onClose={() => setReceiptPaymentId(null)}
       />
 
-      {/* Generate Bills Modal */}
+      {/* Proof Preview Modal (matching SppView.tsx) */}
+      <ProofPreviewModal
+        payment={selectedProofPayment}
+        open={proofModalOpen}
+        onOpenChange={(open) => {
+          setProofModalOpen(open);
+          if (!open) setSelectedProofPayment(null);
+        }}
+      />
+
+      {/* Generate Bills Mass Dialog */}
       <Dialog open={isGenerateModalOpen} onOpenChange={setIsGenerateModalOpen}>
-        <DialogContent className="sm:max-w-[440px] glass-modal p-6">
+        <DialogContent className="sm:max-w-[450px] glass-modal p-6">
           <DialogHeader>
-            <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-emerald-600" />
-              Generate Tagihan Biaya Tahunan
-            </DialogTitle>
+            <div className="flex items-center gap-2">
+              <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700">
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <DialogTitle className="text-base font-bold text-slate-900">
+                Generate Tagihan Biaya Tahunan
+              </DialogTitle>
+            </div>
           </DialogHeader>
           <div className="space-y-3 mt-2 text-xs text-slate-600">
             <p>

@@ -8,6 +8,7 @@ export interface PayAnnualFeePayload {
   payment_method: 'CASH' | 'TRANSFER';
   notes?: string;
   proof_url?: string;
+  proof?: File | null;
 }
 
 export const usePayAnnualFeeBill = () => {
@@ -15,6 +16,31 @@ export const usePayAnnualFeeBill = () => {
 
   return useMutation({
     mutationFn: async (payload: PayAnnualFeePayload) => {
+      if (payload.proof) {
+        const formData = new FormData();
+        formData.append('annual_fee_bill_id', payload.annual_fee_bill_id);
+        formData.append('amount', String(payload.amount));
+        formData.append('payment_method', payload.payment_method);
+        if (payload.notes) {
+          formData.append('notes', payload.notes);
+        }
+        if (payload.proof_url) {
+          formData.append('proof_url', payload.proof_url);
+        }
+        formData.append('proof', payload.proof);
+
+        const response = await apiClient.post<{ message: string; data: AnnualFeePayment }>(
+          '/annual-fees/payments',
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+        return response.data;
+      }
+
       const response = await apiClient.post<{ message: string; data: AnnualFeePayment }>(
         '/annual-fees/payments',
         payload
