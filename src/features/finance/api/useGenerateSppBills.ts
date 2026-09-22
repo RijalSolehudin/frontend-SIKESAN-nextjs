@@ -4,6 +4,7 @@ import { apiClient } from '@/lib/axios';
 export interface GenerateSppPayload {
   period_month: number;
   period_year: number;
+  education_level?: string;
 }
 
 export const useGenerateSppBills = () => {

@@ -7,6 +7,7 @@ import {
 } from '../types';
 
 interface GetSppConfigurationsParams {
+  education_level?: string;
   entry_year?: number;
   academic_year_id?: number;
   type?: 'student' | 'standard';
@@ -50,14 +51,18 @@ export const useUpdateSppConfiguration = () => {
       id,
       amount,
       notes,
+      education_level,
+      entry_year,
     }: {
       id: number;
       amount: number;
       notes?: string | null;
+      education_level?: string | null;
+      entry_year?: number | null;
     }) => {
       const response = await apiClient.put<{ message: string; data: SppConfiguration }>(
         `/spp-configurations/${id}`,
-        { amount, notes }
+        { amount, notes, education_level, entry_year }
       );
       return response.data;
     },

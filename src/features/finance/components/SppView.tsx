@@ -21,6 +21,7 @@ import {
   MessageCircle,
   Clock,
   Sliders,
+  GraduationCap,
 } from 'lucide-react';
 import { SppPricingTab } from './SppPricingTab';
 import { toast } from 'sonner';
@@ -56,6 +57,7 @@ const MONTH_NAMES: Record<number, string> = {
 export function SppView() {
   const [activeTab, setActiveTab] = useState<'bills' | 'verifications' | 'pricing'>('bills');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedLevel, setSelectedLevel] = useState<string>('all');
   const [selectedClassId, setSelectedClassId] = useState<string>('all');
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(15);
@@ -86,6 +88,7 @@ export function SppView() {
   const { data: studentsData, isLoading: isLoadingStudents } = useGetStudents({
     search: debouncedSearch,
     class_id: selectedClassId === 'all' ? undefined : Number(selectedClassId),
+    education_level: selectedLevel === 'all' ? undefined : selectedLevel,
     page,
     per_page: perPage,
     status: 'ACTIVE',
@@ -294,8 +297,32 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
                   />
                 </div>
 
+                {/* Level Filter Dropdown */}
+                <div className="w-full sm:w-44">
+                  <Select
+                    value={selectedLevel}
+                    onValueChange={(val) => {
+                      setSelectedLevel(val);
+                      setPage(1);
+                    }}
+                  >
+                    <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 text-xs">
+                      <div className="flex items-center gap-2 truncate">
+                        <GraduationCap className="h-4 w-4 text-emerald-600 shrink-0" />
+                        <SelectValue placeholder="Semua Jenjang" />
+                      </div>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Jenjang</SelectItem>
+                      <SelectItem value="SD">Jenjang SD</SelectItem>
+                      <SelectItem value="SMP">Jenjang SMP</SelectItem>
+                      <SelectItem value="SMA">Jenjang SMA</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Class Filter Dropdown */}
-                <div className="w-full sm:w-52">
+                <div className="w-full sm:w-48">
                   <Select
                     value={selectedClassId}
                     onValueChange={(val) => {
@@ -383,6 +410,11 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.
                               <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/60 font-medium">
                                 {student.classroom?.name || '-'}
                               </span>
+                              {student.classroom?.education_level && (
+                                <span className="inline-block ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                                  {student.classroom.education_level}
+                                </span>
+                              )}
                             </td>
                             <td className="px-5 py-3.5 text-xs text-slate-600">
                               <span className="px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/60 font-medium">

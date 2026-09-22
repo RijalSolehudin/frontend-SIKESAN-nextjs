@@ -7,7 +7,7 @@ import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { MoneyInput } from '@/components/ui/money-input';
 import { Input } from '@/components/ui/input';
-import { CalendarDays } from 'lucide-react';
+import { School, CalendarDays } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -25,9 +25,19 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useCreateSppConfiguration } from '../api/useSppConfigurations';
 
 const formSchema = z.object({
+  education_level: z.enum(['SD', 'SMP', 'SMA'], {
+    message: 'Jenjang Pendidikan wajib dipilih',
+  }),
   entry_year: z.string().min(4, 'Tahun Masuk minimal 4 digit').refine((val) => !isNaN(Number(val)) && Number(val) >= 2000, {
     message: 'Tahun Masuk harus valid (>= 2000)',
   }),
@@ -43,12 +53,14 @@ interface CreateSppStandardPricingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultEntryYear?: number;
+  defaultEducationLevel?: 'SD' | 'SMP' | 'SMA';
 }
 
 export function CreateSppStandardPricingModal({
   open,
   onOpenChange,
   defaultEntryYear,
+  defaultEducationLevel = 'SMP',
 }: CreateSppStandardPricingModalProps) {
   const createMutation = useCreateSppConfiguration();
 
@@ -58,6 +70,7 @@ export function CreateSppStandardPricingModal({
     resolver: zodResolver(formSchema),
     mode: 'onTouched',
     defaultValues: {
+      education_level: defaultEducationLevel,
       entry_year: defaultEntryYear ? defaultEntryYear.toString() : currentYear.toString(),
       amount: '',
       notes: '',
@@ -69,11 +82,15 @@ export function CreateSppStandardPricingModal({
       if (defaultEntryYear) {
         form.setValue('entry_year', defaultEntryYear.toString());
       }
+      if (defaultEducationLevel) {
+        form.setValue('education_level', defaultEducationLevel);
+      }
     }
-  }, [open, defaultEntryYear, form]);
+  }, [open, defaultEntryYear, defaultEducationLevel, form]);
 
   const resetAll = () => {
     form.reset({
+      education_level: defaultEducationLevel,
       entry_year: defaultEntryYear ? defaultEntryYear.toString() : currentYear.toString(),
       amount: '',
       notes: '',
@@ -83,6 +100,7 @@ export function CreateSppStandardPricingModal({
   const onSubmit = (values: FormValues) => {
     createMutation.mutate(
       {
+        education_level: values.education_level,
         entry_year: parseInt(values.entry_year),
         student_id: null,
         amount: parseInt(values.amount),
@@ -90,12 +108,12 @@ export function CreateSppStandardPricingModal({
       },
       {
         onSuccess: () => {
-          toast.success(`Tarif SPP Angkatan ${values.entry_year} berhasil disimpan`);
+          toast.success(`Tarif SPP Jenjang ${values.education_level} Angkatan ${values.entry_year} berhasil disimpan`);
           onOpenChange(false);
           resetAll();
         },
         onError: (error: any) => {
-          toast.error(error?.response?.data?.message || 'Gagal menyimpan tarif SPP angkatan');
+          toast.error(error?.response?.data?.message || 'Gagal menyimpan tarif SPP');
         },
       }
     );
@@ -113,36 +131,61 @@ export function CreateSppStandardPricingModal({
         <DialogHeader>
           <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
             <CalendarDays className="h-5 w-5 text-emerald-600" />
-            Atur Tarif SPP Angkatan
+            Atur Tarif SPP Jenjang & Angkatan
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Tetapkan tarif SPP standar untuk angkatan/tahun masuk tertentu. Tarif ini akan tetap berlaku selama masa pendidikan santri angkatan tersebut.
+            Tetapkan tarif SPP standar berdasarkan jenjang pendidikan dan angkatan (tahun masuk). Tarif berlaku tetap selama masa studi santri.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-2">
-            <FormField
-              control={form.control}
-              name="entry_year"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-xs font-semibold text-slate-700">Tahun Masuk / Angkatan</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="number"
-                      placeholder="Contoh: 2026"
-                      className="h-10 rounded-xl text-sm"
-                      {...field}
-                    />
-                  </FormControl>
-                  <p className="text-[11px] text-slate-400">
-                    Santri yang terdaftar dengan tahun masuk ini akan ditagih tarif ini.
-                  </p>
-                  <FormMessage className="text-xs" />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-3">
+              <FormField
+                control={form.control}
+                name="education_level"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-semibold text-slate-700">Jenjang Pendidikan</FormLabel>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="h-10 rounded-xl text-xs bg-white">
+                          <SelectValue placeholder="Pilih Jenjang" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="SD">Jenjang SD</SelectItem>
+                        <SelectItem value="SMP">Jenjang SMP</SelectItem>
+                        <SelectItem value="SMA">Jenjang SMA</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="entry_year"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-xs font-semibold text-slate-700">Tahun Masuk / Angkatan</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Contoh: 2026"
+                        className="h-10 rounded-xl text-sm"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
@@ -154,7 +197,7 @@ export function CreateSppStandardPricingModal({
                     <MoneyInput
                       value={field.value}
                       onChange={field.onChange}
-                      placeholder="Masukkan nominal, contoh: 150.000"
+                      placeholder="Masukkan nominal, contoh: 250.000"
                     />
                   </FormControl>
                   <FormMessage className="text-xs" />
@@ -172,7 +215,7 @@ export function CreateSppStandardPricingModal({
                   </FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Misal: Kenaikan tarif angkatan baru SK No. 12/2026"
+                      placeholder="Misal: Penyesuaian tarif kurikulum baru"
                       className="h-10 rounded-xl text-sm"
                       {...field}
                     />
@@ -190,6 +233,7 @@ export function CreateSppStandardPricingModal({
                   onOpenChange(false);
                   resetAll();
                 }}
+                disabled={createMutation.isPending}
                 className="rounded-xl text-xs"
               >
                 Batal
@@ -197,9 +241,9 @@ export function CreateSppStandardPricingModal({
               <Button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="rounded-xl text-xs bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm"
+                className="rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
               >
-                {createMutation.isPending ? 'Menyimpan...' : 'Simpan Tarif Angkatan'}
+                {createMutation.isPending ? 'Menyimpan...' : 'Simpan Tarif SPP'}
               </Button>
             </DialogFooter>
           </form>

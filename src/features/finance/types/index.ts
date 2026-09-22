@@ -2,6 +2,7 @@ import { Student, Classroom, AcademicYear } from '@/features/master-data/types';
 
 export interface SppConfiguration {
   id: number;
+  education_level?: 'SD' | 'SMP' | 'SMA' | null;
   entry_year?: number | null;
   academic_year_id?: number | null;
   class_id?: number | null;
@@ -20,6 +21,7 @@ export interface SppConfigurationsResponse {
 }
 
 export interface CreateSppConfigurationPayload {
+  education_level?: 'SD' | 'SMP' | 'SMA' | null;
   entry_year?: number | null;
   academic_year_id?: number | null;
   class_id?: number | null;

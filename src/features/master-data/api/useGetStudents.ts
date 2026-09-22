@@ -9,6 +9,7 @@ interface UseGetStudentsParams {
   class_id?: number;
   dormitory_id?: number;
   status?: string;
+  education_level?: string;
 }
 
 export const useGetStudents = (params?: UseGetStudentsParams) => {

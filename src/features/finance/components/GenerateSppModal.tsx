@@ -36,6 +36,7 @@ import { useGenerateSppBills } from '../api/useGenerateSppBills';
 const formSchema = z.object({
   period_month: z.string().min(1, 'Bulan wajib dipilih'),
   period_year: z.string().min(1, 'Tahun wajib dipilih'),
+  education_level: z.string().min(1, 'Jenjang wajib dipilih'),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -66,22 +67,27 @@ export function GenerateSppModal() {
     defaultValues: {
       period_month: (new Date().getMonth() + 1).toString(),
       period_year: currentYear.toString(),
+      education_level: 'all',
     },
   });
 
   const onSubmit = (values: FormValues) => {
-    generateMutation.mutate({
-      period_month: parseInt(values.period_month),
-      period_year: parseInt(values.period_year),
-    }, {
-      onSuccess: () => {
-        toast.success('SPP berhasil digenerate');
-        setOpen(false);
+    generateMutation.mutate(
+      {
+        period_month: parseInt(values.period_month),
+        period_year: parseInt(values.period_year),
+        education_level: values.education_level === 'all' ? undefined : values.education_level,
       },
-      onError: (error: any) => {
-        toast.error(error?.response?.data?.message || 'Gagal generate tagihan SPP');
-      },
-    });
+      {
+        onSuccess: (res: any) => {
+          toast.success(res?.message || 'SPP berhasil digenerate');
+          setOpen(false);
+        },
+        onError: (error: any) => {
+          toast.error(error?.response?.data?.message || 'Gagal generate tagihan SPP');
+        },
+      }
+    );
   };
 
   return (
@@ -101,7 +107,7 @@ export function GenerateSppModal() {
             Generate Tagihan SPP Masal
           </DialogTitle>
           <DialogDescription className="text-xs text-slate-500">
-            Pilih periode bulan dan tahun ajaran untuk membuat tagihan SPP bagi seluruh santri berstatus aktif.
+            Pilih periode bulan dan tahun ajaran untuk membuat tagihan SPP bagi santri berstatus aktif.
           </DialogDescription>
         </DialogHeader>
 
@@ -116,7 +122,7 @@ export function GenerateSppModal() {
                     <FormLabel className="text-xs font-semibold text-slate-700">Bulan Periode</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="h-10 rounded-xl">
+                        <SelectTrigger className="h-10 rounded-xl bg-white">
                           <SelectValue placeholder="Pilih Bulan" />
                         </SelectTrigger>
                       </FormControl>
@@ -139,7 +145,7 @@ export function GenerateSppModal() {
                     <FormLabel className="text-xs font-semibold text-slate-700">Tahun Periode</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger className="h-10 rounded-xl">
+                        <SelectTrigger className="h-10 rounded-xl bg-white">
                           <SelectValue placeholder="Pilih Tahun" />
                         </SelectTrigger>
                       </FormControl>
@@ -155,6 +161,30 @@ export function GenerateSppModal() {
               />
             </div>
 
+            <FormField
+              control={form.control}
+              name="education_level"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs font-semibold text-slate-700">Target Jenjang Pendidikan</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="h-10 rounded-xl bg-white">
+                        <SelectValue placeholder="Semua Jenjang" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Jenjang (SD, SMP, SMA)</SelectItem>
+                      <SelectItem value="SD">Hanya Jenjang SD</SelectItem>
+                      <SelectItem value="SMP">Hanya Jenjang SMP</SelectItem>
+                      <SelectItem value="SMA">Hanya Jenjang SMA</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage className="text-xs" />
+                </FormItem>
+              )}
+            />
+
             <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 leading-relaxed">
               Tagihan yang sudah terbit pada periode yang sama tidak akan terduplikasi.
             </div>
@@ -165,14 +195,14 @@ export function GenerateSppModal() {
                 variant="outline"
                 onClick={() => setOpen(false)}
                 disabled={generateMutation.isPending}
-                className="rounded-lg"
+                className="rounded-xl text-xs"
               >
                 Batal
               </Button>
               <Button
                 type="submit"
                 disabled={generateMutation.isPending}
-                className="rounded-lg font-semibold"
+                className="rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white"
               >
                 {generateMutation.isPending ? 'Memproses...' : 'Generate Tagihan'}
               </Button>
