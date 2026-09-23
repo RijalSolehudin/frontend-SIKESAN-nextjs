@@ -28,8 +28,9 @@ const getPageTitle = (pathname: string) => {
   if (pathname.includes('/finance/top-ups')) return 'Top Up Saldo';
   if (pathname.includes('/finance/infaq')) return 'Penerimaan Infaq';
   if (pathname.includes('/finance/expenses')) return 'Pengeluaran';
-  if (pathname.includes('/finance/ledger')) return 'Buku Besar';
+  if (pathname.includes('/users')) return 'Manajemen User';
   if (pathname.includes('/roles')) return 'Manajemen Role & Hak Akses';
+  if (pathname.includes('/mobile-config')) return 'Konfigurasi UI Mobile';
   return 'Dashboard';
 };
 
@@ -101,6 +102,7 @@ export function Header() {
             <div className="pt-3 pb-1 px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pengaturan Akses</div>
             <Button variant="ghost" className="justify-start pl-6 w-full text-slate-600 text-xs" onClick={() => router.push('/users')}>Manajemen User</Button>
             <Button variant="ghost" className="justify-start pl-6 w-full text-slate-600 text-xs" onClick={() => router.push('/roles')}>Manajemen Role</Button>
+            <Button variant="ghost" className="justify-start pl-6 w-full text-slate-600 text-xs" onClick={() => router.push('/mobile-config')}>Konfigurasi Mobile</Button>
           </div>
         </SheetContent>
       </Sheet>

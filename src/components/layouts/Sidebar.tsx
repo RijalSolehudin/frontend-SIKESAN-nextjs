@@ -16,6 +16,7 @@ import {
   ArrowUpFromLine, 
   BookOpenText,
   ShieldCheck,
+  Smartphone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -53,6 +54,7 @@ const navigation = [
     children: [
       { name: 'Manajemen User', href: '/users', icon: Users },
       { name: 'Manajemen Role', href: '/roles', icon: ShieldCheck },
+      { name: 'Konfigurasi Mobile', href: '/mobile-config', icon: Smartphone },
     ]
   },
 ];
