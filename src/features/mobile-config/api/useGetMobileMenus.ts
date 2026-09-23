@@ -1,30 +1,43 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/axios';
-import { MobileConfigResponse, MobileMenuItem, MENU_METADATA } from '../types';
+import {
+  AllRolesConfigResponse,
+  MobileMenuItem,
+  RoleMenuConfigMap,
+  MENU_METADATA,
+  SUPPORTED_ROLES,
+} from '../types';
 
 export const useGetMobileMenus = () => {
   return useQuery({
-    queryKey: ['mobile-menu-config'],
-    queryFn: async (): Promise<MobileMenuItem[]> => {
-      const response = await apiClient.get<MobileConfigResponse>('/mobile/menu-config');
-      const items = response.data.data;
-
-      // Enhance with metadata
-      return items.map((item) => {
-        const meta = MENU_METADATA[item.id] || {
-          description: 'Modul fitur aplikasi mobile SIKESAN.',
-          allowedRoles: ['Semua Pengguna'],
-          category: 'Operasional',
-          iconName: 'LayoutGrid',
-        };
-
-        return {
-          ...item,
-          description: meta.description,
-          allowedRoles: meta.allowedRoles,
-          category: meta.category,
-        };
+    queryKey: ['mobile-menu-config-by-role'],
+    queryFn: async (): Promise<RoleMenuConfigMap> => {
+      const response = await apiClient.get<AllRolesConfigResponse>('/mobile/menu-config', {
+        params: { all: 'true' },
       });
+
+      const rawData = response.data.data;
+      const result: RoleMenuConfigMap = {};
+
+      SUPPORTED_ROLES.forEach((role) => {
+        const items = rawData[role] || [];
+        result[role] = items.map((item: MobileMenuItem) => {
+          const meta = MENU_METADATA[item.id] || {
+            description: 'Modul fitur aplikasi mobile SIKESAN.',
+            category: 'Operasional' as const,
+            defaultRoles: [],
+          };
+
+          return {
+            ...item,
+            description: meta.description,
+            category: meta.category,
+            allowedRoles: meta.defaultRoles,
+          };
+        });
+      });
+
+      return result;
     },
   });
 };

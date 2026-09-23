@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useGetMobileMenus } from '../api/useGetMobileMenus';
 import { useUpdateMobileMenus } from '../api/useUpdateMobileMenus';
+import { SUPPORTED_ROLES, SupportedRole } from '../types';
 import { MetricCard } from '@/features/dashboard/components/MetricCard';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ import {
   ShieldAlert,
   Settings,
   LayoutGrid,
+  UserCheck,
 } from 'lucide-react';
 
 const ICON_MAP: Record<string, any> = {
@@ -46,102 +48,133 @@ const ICON_MAP: Record<string, any> = {
 };
 
 export function MobileConfigView() {
-  const { data: serverMenus, isLoading, isError, refetch } = useGetMobileMenus();
+  const { data: serverRolesMap, isLoading, isError, refetch } = useGetMobileMenus();
   const updateMutation = useUpdateMobileMenus();
 
-  // Local draft overrides to enable reactive editing without effect synchronization
-  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
+  // Active role selected in the UI
+  const [selectedRole, setSelectedRole] = useState<SupportedRole>('Wali Santri');
+
+  // Local overrides organized by role: { "Wali Santri": { "top_up": true, ... }, "Kasir": { ... } }
+  const [roleOverrides, setRoleOverrides] = useState<Record<string, Record<string, boolean>>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
-  const [previewRole, setPreviewRole] = useState<string>('Wali Santri');
 
-  // Merged menus with local overrides
-  const effectiveMenus = useMemo(() => {
-    if (!serverMenus) return [];
-    return serverMenus.map((item) => ({
-      ...item,
-      is_enabled: overrides[item.id] !== undefined ? overrides[item.id] : item.is_enabled,
-    }));
-  }, [serverMenus, overrides]);
+  // Compute effective menus for a given role
+  const getEffectiveMenusForRole = useMemo(() => {
+    return (role: string) => {
+      const serverItems = serverRolesMap?.[role] || [];
+      const overrides = roleOverrides[role] || {};
 
-  // Check if there are unsaved local modifications
-  const hasChanges = useMemo(() => {
-    if (!serverMenus) return false;
-    return Object.keys(overrides).length > 0 && serverMenus.some((m) => {
-      return overrides[m.id] !== undefined && overrides[m.id] !== m.is_enabled;
-    });
-  }, [serverMenus, overrides]);
+      return serverItems.map((item) => ({
+        ...item,
+        is_enabled: overrides[item.id] !== undefined ? overrides[item.id] : item.is_enabled,
+      }));
+    };
+  }, [serverRolesMap, roleOverrides]);
 
-  // Toggle individual menu
-  const handleToggle = (id: string, checked: boolean) => {
-    setOverrides((prev) => ({ ...prev, [id]: checked }));
-  };
+  // Current active role menus
+  const currentRoleMenus = useMemo(() => {
+    return getEffectiveMenusForRole(selectedRole);
+  }, [getEffectiveMenusForRole, selectedRole]);
 
-  // Bulk actions
-  const handleEnableAll = () => {
-    if (!serverMenus) return;
-    const nextOverrides: Record<string, boolean> = {};
-    serverMenus.forEach((m) => {
-      nextOverrides[m.id] = true;
-    });
-    setOverrides(nextOverrides);
-  };
+  // Check if current selected role has unsaved changes
+  const hasChangesForRole = useMemo(() => {
+    const serverItems = serverRolesMap?.[selectedRole] || [];
+    const overrides = roleOverrides[selectedRole] || {};
 
-  const handleDisableAll = () => {
-    if (!serverMenus) return;
-    const nextOverrides: Record<string, boolean> = {};
-    serverMenus.forEach((m) => {
-      nextOverrides[m.id] = false;
-    });
-    setOverrides(nextOverrides);
-  };
+    return serverItems.some(
+      (item) => overrides[item.id] !== undefined && overrides[item.id] !== item.is_enabled
+    );
+  }, [serverRolesMap, roleOverrides, selectedRole]);
 
-  const handleReset = () => {
-    setOverrides({});
-  };
-
-  const handleSave = () => {
-    updateMutation.mutate(effectiveMenus, {
-      onSuccess: () => {
-        setOverrides({});
+  // Toggle individual menu for current role
+  const handleToggle = (menuId: string, checked: boolean) => {
+    setRoleOverrides((prev) => ({
+      ...prev,
+      [selectedRole]: {
+        ...(prev[selectedRole] || {}),
+        [menuId]: checked,
       },
+    }));
+  };
+
+  // Bulk actions for current role
+  const handleEnableAllForRole = () => {
+    const serverItems = serverRolesMap?.[selectedRole] || [];
+    const allTrue: Record<string, boolean> = {};
+    serverItems.forEach((m) => {
+      allTrue[m.id] = true;
+    });
+
+    setRoleOverrides((prev) => ({
+      ...prev,
+      [selectedRole]: allTrue,
+    }));
+  };
+
+  const handleDisableAllForRole = () => {
+    const serverItems = serverRolesMap?.[selectedRole] || [];
+    const allFalse: Record<string, boolean> = {};
+    serverItems.forEach((m) => {
+      allFalse[m.id] = false;
+    });
+
+    setRoleOverrides((prev) => ({
+      ...prev,
+      [selectedRole]: allFalse,
+    }));
+  };
+
+  const handleResetForRole = () => {
+    setRoleOverrides((prev) => {
+      const next = { ...prev };
+      delete next[selectedRole];
+      return next;
     });
   };
 
-  // Filtered menus for the table/list
+  const handleSaveForRole = () => {
+    updateMutation.mutate(
+      {
+        role: selectedRole,
+        menus: currentRoleMenus,
+      },
+      {
+        onSuccess: () => {
+          handleResetForRole();
+        },
+      }
+    );
+  };
+
+  // Filtered menus for the table/list based on search & category
   const filteredMenus = useMemo(() => {
-    return effectiveMenus.filter((item) => {
+    return currentRoleMenus.filter((item) => {
       const matchesSearch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        (item.allowedRoles && item.allowedRoles.some((r) => r.toLowerCase().includes(searchQuery.toLowerCase())));
+        (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
 
       const matchesCategory =
         selectedCategory === 'Semua' || item.category === selectedCategory;
 
       return matchesSearch && matchesCategory;
     });
-  }, [effectiveMenus, searchQuery, selectedCategory]);
+  }, [currentRoleMenus, searchQuery, selectedCategory]);
 
-  // Counts
+  // Counts for currently selected role
   const activeCount = useMemo(
-    () => effectiveMenus.filter((m) => m.is_enabled).length,
-    [effectiveMenus]
+    () => currentRoleMenus.filter((m) => m.is_enabled).length,
+    [currentRoleMenus]
   );
   const inactiveCount = useMemo(
-    () => effectiveMenus.filter((m) => !m.is_enabled).length,
-    [effectiveMenus]
+    () => currentRoleMenus.filter((m) => !m.is_enabled).length,
+    [currentRoleMenus]
   );
 
-  // Filter menus visible in the Mobile Preview based on previewRole
+  // Menus visible in the live preview (only enabled ones for current role)
   const previewVisibleMenus = useMemo(() => {
-    return effectiveMenus.filter((item) => {
-      if (!item.is_enabled) return false;
-      if (!item.allowedRoles || item.allowedRoles.length === 0) return true;
-      const normRole = previewRole.toLowerCase();
-      return item.allowedRoles.some((r) => r.toLowerCase() === normRole || normRole.includes(r.toLowerCase()));
-    });
-  }, [effectiveMenus, previewRole]);
+    return currentRoleMenus.filter((m) => m.is_enabled);
+  }, [currentRoleMenus]);
 
   if (isError) {
     return (
@@ -155,34 +188,34 @@ export function MobileConfigView() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="space-y-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <div className="h-8 w-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
               <Smartphone className="h-4 w-4" />
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900">
-              Konfigurasi UI Dinamis Mobile
+              Konfigurasi UI Mobile Berbasis Role
             </h1>
-            {hasChanges && (
-              <span className="text-[11px] font-semibold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200 animate-pulse">
-                Ada Perubahan Belum Disimpan
+            {hasChangesForRole && (
+              <span className="text-[11px] font-semibold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full border border-amber-200 animate-pulse">
+                Ada Perubahan Belum Disimpan ({selectedRole})
               </span>
             )}
           </div>
           <p className="text-xs sm:text-sm text-slate-500">
-            Aktifkan atau nonaktifkan modul menu yang tampil di aplikasi mobile Flutter SIKESAN secara real-time.
+            Pilih peran pengguna di bawah untuk mengaktifkan atau menonaktifkan seluruh 11 pilihan menu mobile secara fleksibel.
           </p>
         </div>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          {hasChanges && (
+          {hasChangesForRole && (
             <Button
               variant="outline"
               size="sm"
-              onClick={handleReset}
+              onClick={handleResetForRole}
               disabled={updateMutation.isPending}
               className="gap-1.5 text-xs text-slate-600"
             >
@@ -192,42 +225,94 @@ export function MobileConfigView() {
           )}
           <Button
             size="sm"
-            onClick={handleSave}
-            disabled={!hasChanges || updateMutation.isPending}
-            className="gap-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+            onClick={handleSaveForRole}
+            disabled={!hasChangesForRole || updateMutation.isPending}
+            className="gap-2 text-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-semibold"
           >
             {updateMutation.isPending ? (
               <div className="h-3.5 w-3.5 rounded-full border-2 border-white border-t-transparent animate-spin" />
             ) : (
               <Save className="h-3.5 w-3.5" />
             )}
-            Simpan Perubahan
+            Simpan Konfigurasi ({selectedRole})
           </Button>
         </div>
       </div>
 
-      {/* Metric Cards Strip */}
+      {/* Role Selector Segmented Bar */}
+      <div className="bg-white p-2.5 rounded-2xl border border-slate-200/90 shadow-xs space-y-2">
+        <div className="flex items-center gap-2 px-2 pt-1 text-xs font-bold text-slate-600">
+          <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
+          <span>PILIH ROLE PENGGUNA UNTUK DIKONFIGURASI:</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+          {SUPPORTED_ROLES.map((role) => {
+            const isSelected = selectedRole === role;
+            const roleMenus = getEffectiveMenusForRole(role);
+            const activeMenus = roleMenus.filter((m) => m.is_enabled).length;
+
+            return (
+              <button
+                key={role}
+                onClick={() => setSelectedRole(role)}
+                className={`relative p-3 rounded-xl text-left border transition-all flex flex-col justify-between gap-1.5 ${
+                  isSelected
+                    ? 'bg-emerald-50/70 border-emerald-500 ring-2 ring-emerald-500/20 shadow-xs'
+                    : 'bg-slate-50/60 border-slate-200/80 hover:bg-slate-100 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span
+                    className={`text-xs font-bold truncate leading-tight ${
+                      isSelected ? 'text-emerald-900' : 'text-slate-800'
+                    }`}
+                  >
+                    {role}
+                  </span>
+                  {isSelected && (
+                    <span className="h-2 w-2 rounded-full bg-emerald-600 shrink-0" />
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                      isSelected
+                        ? 'bg-emerald-600 text-white border-emerald-600'
+                        : 'bg-white text-slate-600 border-slate-200'
+                    }`}
+                  >
+                    {activeMenus} / {roleMenus.length} Aktif
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Metric Cards Strip for Selected Role */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <MetricCard
-          title="Total Modul Mobile"
-          value={`${effectiveMenus.length} Modul`}
+          title={`Total Menu (${selectedRole})`}
+          value={`${currentRoleMenus.length} Pilihan Menu`}
           icon={<LayoutGrid className="h-4 w-4" />}
           isLoading={isLoading}
           variant="emerald"
-          badge="Katalog Menu"
+          badge="Semua Modul Terbuka"
           valueClassName="text-slate-900 text-2xl font-extrabold"
         />
         <MetricCard
-          title="Modul Aktif"
+          title="Menu Aktif Ditampilkan"
           value={`${activeCount} Modul`}
           icon={<CheckCircle2 className="h-4 w-4" />}
           isLoading={isLoading}
           variant="emerald"
-          badge="Aktif di Mobile"
+          badge="Tampil di Layar"
           valueClassName="text-emerald-700 text-2xl font-extrabold"
         />
         <MetricCard
-          title="Modul Dinonaktifkan"
+          title="Menu Dinonaktifkan"
           value={`${inactiveCount} Modul`}
           icon={<XCircle className="h-4 w-4" />}
           isLoading={isLoading}
@@ -237,7 +322,7 @@ export function MobileConfigView() {
         />
       </div>
 
-      {/* Main Content: Config List & Live Mobile Preview */}
+      {/* Main Content: Controls & Live Mobile Preview */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Side: Controls & Menu Table (7 cols on lg) */}
         <div className="lg:col-span-7 xl:col-span-8 space-y-4">
@@ -247,7 +332,7 @@ export function MobileConfigView() {
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                 <Input
-                  placeholder="Cari modul atau peran..."
+                  placeholder={`Cari menu untuk ${selectedRole}...`}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9 h-9 text-xs"
@@ -259,7 +344,7 @@ export function MobileConfigView() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleEnableAll}
+                  onClick={handleEnableAllForRole}
                   className="text-[11px] h-9 px-2.5 text-emerald-700 border-emerald-200 hover:bg-emerald-50"
                 >
                   Aktifkan Semua
@@ -267,7 +352,7 @@ export function MobileConfigView() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={handleDisableAll}
+                  onClick={handleDisableAllForRole}
                   className="text-[11px] h-9 px-2.5 text-rose-700 border-rose-200 hover:bg-rose-50"
                 >
                   Nonaktifkan Semua
@@ -294,16 +379,16 @@ export function MobileConfigView() {
             </div>
           </div>
 
-          {/* Menu Items List */}
+          {/* Menu Items List - ALL 11 ITEMS SHOWN */}
           <div className="bg-white rounded-xl border border-slate-200/80 shadow-xs divide-y divide-slate-100 overflow-hidden">
             {isLoading ? (
               <div className="py-12 text-center text-slate-500 text-sm flex flex-col items-center justify-center gap-2">
                 <div className="h-6 w-6 rounded-full border-2 border-emerald-600 border-t-transparent animate-spin" />
-                <span>Memuat katalog modul mobile...</span>
+                <span>Memuat katalog modul untuk {selectedRole}...</span>
               </div>
             ) : filteredMenus.length === 0 ? (
               <div className="p-8 text-center text-slate-500 text-xs">
-                Tidak ada modul yang cocok dengan kriteria pencarian.
+                Tidak ada menu yang sesuai dengan kriteria pencarian.
               </div>
             ) : (
               filteredMenus.map((item) => {
@@ -347,20 +432,6 @@ export function MobileConfigView() {
                         <p className="text-xs text-slate-500 leading-snug line-clamp-2">
                           {item.description}
                         </p>
-                        {/* Target Roles */}
-                        {item.allowedRoles && item.allowedRoles.length > 0 && (
-                          <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
-                            <span className="text-[10px] text-slate-400 font-medium">Akses:</span>
-                            {item.allowedRoles.map((role) => (
-                              <span
-                                key={role}
-                                className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded border border-slate-200"
-                              >
-                                {role}
-                              </span>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     </div>
 
@@ -375,7 +446,7 @@ export function MobileConfigView() {
                           {item.is_enabled ? 'Aktif' : 'Nonaktif'}
                         </span>
                         <span className="text-[10px] text-slate-400">
-                          {item.is_enabled ? 'Tampil' : 'Sembunyikan'}
+                          {item.is_enabled ? `Tampil di ${selectedRole}` : 'Disembunyikan'}
                         </span>
                       </div>
                       <Switch
@@ -392,34 +463,21 @@ export function MobileConfigView() {
 
         {/* Right Side: Live Mobile Mockup Preview (5 cols on lg) */}
         <div className="lg:col-span-5 xl:col-span-4 space-y-4">
-          <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs space-y-3">
+          <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Eye className="h-4 w-4 text-emerald-600" />
                 <h3 className="text-sm font-bold text-slate-900">
-                  Pratinjau Aplikasi Mobile
+                  Pratinjau Layar: {selectedRole}
                 </h3>
               </div>
-              <span className="text-[10px] font-medium bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
+              <span className="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">
                 Live Preview
               </span>
             </div>
-
-            {/* Role Switcher for Preview */}
-            <div className="flex items-center gap-1.5 text-xs">
-              <span className="text-slate-500 font-medium">Simulasi Role:</span>
-              <select
-                value={previewRole}
-                onChange={(e) => setPreviewRole(e.target.value)}
-                className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-              >
-                <option value="Wali Santri">Wali Santri</option>
-                <option value="Kasir">Kasir</option>
-                <option value="Staff Kesantrian">Staff Kesantrian</option>
-                <option value="Bendahara">Bendahara</option>
-                <option value="Super Admin">Super Admin</option>
-              </select>
-            </div>
+            <p className="text-[11px] text-slate-500 leading-tight">
+              Tampilan berikut menggambarkan apa yang dilihat oleh pengguna dengan peran <b>{selectedRole}</b> di aplikasi Flutter.
+            </p>
           </div>
 
           {/* Smartphone Mockup Frame */}
@@ -438,20 +496,26 @@ export function MobileConfigView() {
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-[10px] opacity-90 block">Assalamualaikum,</span>
-                      <span className="text-xs font-bold block">Bapak/Ibu Wali</span>
+                      <span className="text-xs font-bold block">
+                        {selectedRole === 'Wali Santri' ? 'Bapak/Ibu Wali' : `Pengguna ${selectedRole}`}
+                      </span>
                     </div>
                     <span className="text-[9px] bg-white/20 backdrop-blur-xs px-2 py-0.5 rounded-full font-semibold">
-                      {previewRole}
+                      {selectedRole}
                     </span>
                   </div>
 
                   {/* Financial Balance Card */}
                   <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20 space-y-1">
-                    <span className="text-[9px] opacity-80 block">Total Tabungan Santri</span>
-                    <span className="text-sm font-extrabold tracking-tight block">Rp 2.450.000</span>
+                    <span className="text-[9px] opacity-80 block">
+                      {selectedRole === 'Wali Santri' ? 'Total Tabungan Santri' : 'Ringkasan Kas & Transaksi'}
+                    </span>
+                    <span className="text-sm font-extrabold tracking-tight block">
+                      {selectedRole === 'Wali Santri' ? 'Rp 2.450.000' : 'Rp 18.520.000'}
+                    </span>
                     <div className="flex justify-between items-center text-[9px] opacity-90 pt-1 border-t border-white/15">
-                      <span>Tagihan SPP: Rp 0</span>
-                      <span className="text-emerald-200">Lunas</span>
+                      <span>Status Sistem</span>
+                      <span className="text-emerald-200">Online & Sinkron</span>
                     </div>
                   </div>
                 </div>
@@ -461,13 +525,13 @@ export function MobileConfigView() {
                   <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 px-1">
                     <span>Menu Utama</span>
                     <span className="text-[9px] font-normal text-emerald-600">
-                      {previewVisibleMenus.length} Tampil
+                      {previewVisibleMenus.length} Menu Aktif
                     </span>
                   </div>
 
                   {previewVisibleMenus.length === 0 ? (
-                    <div className="py-8 text-center text-slate-400 text-[10px] space-y-1">
-                      <p>Semua menu disembunyikan untuk role ini.</p>
+                    <div className="py-12 text-center text-slate-400 text-[10px] space-y-1">
+                      <p className="font-semibold">Semua menu dinonaktifkan untuk {selectedRole}.</p>
                       <p className="text-[9px] text-slate-400">Aktifkan modul di sebelah kiri.</p>
                     </div>
                   ) : (
