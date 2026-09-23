@@ -18,40 +18,111 @@ import { toast } from 'sonner';
 import { ShieldCheck, Plus, CheckSquare, Square, KeyRound } from 'lucide-react';
 
 const PERMISSION_LABELS: Record<string, { label: string; desc: string; category: string }> = {
+  // Pengguna & Akses
   'manage users': {
     label: 'Kelola Pengguna',
     desc: 'Membuat, mengubah, dan menghapus akun pengguna sistem',
     category: 'Pengguna & Akses',
   },
+
+  // Master Data
   'manage master_data': {
     label: 'Kelola Master Data',
-    desc: 'Akses tahun ajaran, kelas, asrama, dan konfigurasi SPP',
+    desc: 'Akses tahun ajaran, kelas, dan asrama santri',
     category: 'Master Data',
   },
+  'manage spp_configurations': {
+    label: 'Konfigurasi Tarif SPP',
+    desc: 'Mengatur skema tarif dan kelompok SPP bulanan santri',
+    category: 'Master Data',
+  },
+  'manage annual_fee_configurations': {
+    label: 'Konfigurasi Biaya Tahunan',
+    desc: 'Mengatur komponen dan tarif daftar ulang/biaya tahunan',
+    category: 'Master Data',
+  },
+
+  // Santri
   'manage students': {
     label: 'Kelola Santri',
     desc: 'Registrasi santri, update status, dan pemetaan wali',
     category: 'Santri',
   },
+
+  // Operasional Keuangan (Staf & Bendahara)
   'manage spp': {
-    label: 'Kelola SPP',
-    desc: 'Generate tagihan massal dan input pembayaran kasir SPP',
-    category: 'Keuangan',
+    label: 'Kelola SPP (Akses Penuh)',
+    desc: 'Akses penuh seluruh modul dan kelola SPP',
+    category: 'Operasional Keuangan',
+  },
+  'generate spp_bills': {
+    label: 'Generate Tagihan SPP Massal',
+    desc: 'Menerbitkan tagihan SPP bulanan ke santri',
+    category: 'Operasional Keuangan',
+  },
+  'direct_pay spp': {
+    label: 'Input Pembayaran Kasir SPP',
+    desc: 'Menerima dan mencatat pembayaran langsung SPP di loket kasir',
+    category: 'Operasional Keuangan',
+  },
+  'verify spp_payments': {
+    label: 'Verifikasi Bukti Transfer SPP',
+    desc: 'Konfirmasi bukti bayar dan mutasi bank untuk tagihan SPP',
+    category: 'Operasional Keuangan',
+  },
+  'generate annual_fee_bills': {
+    label: 'Generate Tagihan Biaya Tahunan',
+    desc: 'Menerbitkan tagihan biaya tahunan ke santri',
+    category: 'Operasional Keuangan',
+  },
+  'direct_pay annual_fee': {
+    label: 'Input Pembayaran Kasir Biaya Tahunan',
+    desc: 'Menerima dan mencatat pembayaran langsung biaya tahunan di loket kasir',
+    category: 'Operasional Keuangan',
+  },
+  'verify annual_fee_payments': {
+    label: 'Verifikasi Bukti Biaya Tahunan',
+    desc: 'Konfirmasi bukti bayar untuk tagihan biaya tahunan',
+    category: 'Operasional Keuangan',
   },
   'manage wallet': {
-    label: 'Kelola Dompet Santri',
-    desc: 'Top up saldo dan persetujuan penambahan dana santri',
-    category: 'Keuangan',
+    label: 'Kelola Dompet Santri (Admin)',
+    desc: 'Top up manual dan penyesuaian saldo dompet santri oleh staf',
+    category: 'Operasional Keuangan',
   },
   'manage expenses': {
-    label: 'Kelola Pengeluaran',
+    label: 'Kelola Beban Pengeluaran',
     desc: 'Pencatatan dan verifikasi beban operasional pondok',
-    category: 'Keuangan',
+    category: 'Operasional Keuangan',
   },
+
+  // Layanan Mandiri Santri & Wali (Mobile & Portal)
+  'pay own spp': {
+    label: 'Bayar SPP Mandiri',
+    desc: 'Membayar tagihan SPP santri asuhan via dompet atau transfer gateway',
+    category: 'Layanan Mandiri Wali',
+  },
+  'pay own annual_fee': {
+    label: 'Bayar Biaya Tahunan Mandiri',
+    desc: 'Membayar tagihan biaya tahunan santri asuhan',
+    category: 'Layanan Mandiri Wali',
+  },
+  'topup own wallet': {
+    label: 'Top Up Saldo Mandiri',
+    desc: 'Mengisi ulang saldo dompet santri binaan melalui aplikasi',
+    category: 'Layanan Mandiri Wali',
+  },
+  'pay infaq': {
+    label: 'Pembayaran Infak Kesantrian',
+    desc: 'Menyalurkan infak dan donasi kesantrian melalui aplikasi',
+    category: 'Layanan Mandiri Wali',
+  },
+
+  // Laporan & Akuntansi
   'view reports': {
     label: 'Lihat Laporan & Ledger',
     desc: 'Melihat buku besar, mutasi, dan ekspor laporan keuangan',
-    category: 'Laporan',
+    category: 'Laporan & Akuntansi',
   },
 };
 
